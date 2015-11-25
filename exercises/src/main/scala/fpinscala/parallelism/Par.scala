@@ -44,6 +44,85 @@ object Par {
       if (run(es)(cond).get) t(es) // Notice we are blocking on the result of `cond`.
       else f(es)
 
+  def lazyUnit[A](a: A): Par[A] = fork(unit(a))
+
+  // Exercise 4
+  def asyncF[A, B](f: A => B): A => Par[B] =
+    a => lazyUnit(f(a))
+
+  // Exercise 5
+  def sequence_fr[A](ps: List[Par[A]]): Par[List[A]] =
+    ps.foldRight(unit(Nil:List[A]))((pa, pla) => map2(pa, pla)(_ :: _))
+
+  def sequence[A](ps: List[Par[A]]): Par[List[A]] = {
+    @annotation.tailrec
+    def go[A](ps: List[Par[A]], acc: Par[List[A]]): Par[List[A]] = ps match {
+      case Nil => map(acc)(_.reverse)
+      case h :: t => go(t, map2(h, acc)(_ :: _))
+    }
+    go(ps, unit(List()))
+  }
+
+  def parMap[A, B](ps: List[A])(f: A => B): Par[List[B]] = fork {
+    val fbs: List[Par[B]] = ps.map(asyncF(f))
+    sequence(fbs)
+  }
+
+  // Exercise 6
+  def parFilter[A](as: List[A])(f: A => Boolean): Par[List[A]] = fork {
+    val fbs: List[Par[Boolean]] = as.map(asyncF(f))
+    val conds: Par[List[Boolean]] = sequence(fbs)
+    val pairs: Par[List[(A, Boolean)]] = map2(unit(as), conds)(_ zip _)
+    map(pairs)(_.flatMap{case (a, cond) => if (cond) List(a) else Nil})
+  }
+
+  def parFilter2[A](as: List[A])(f: A => Boolean): Par[List[A]] = fork {
+    val pairs: List[Par[(A, Boolean)]] = as.map(asyncF(a => (a, f(a))))
+    val conds: Par[List[(A, Boolean)]] = sequence(pairs)
+    map(conds)(_.filter(_._2).map(_._1))
+  }
+
+  // Exercise 11
+
+  def choiceN[A](n: Par[Int])(choices: List[Par[A]]): Par[A] =
+    es => choices.toIndexedSeq(n(es).get)(es)
+
+  def choice_cn[A](cond: Par[Boolean])(t: Par[A], f: Par[A]): Par[A] =
+    choiceN(map(cond)(b => if (b) 0 else 1))(List(t, f))
+
+  // Exercise 12
+  def choiceMap[K, V](key: Par[K])(choices: Map[K, Par[V]]): Par[V] =
+    es => choices(key(es).get)(es)
+
+  def choiceN_cm[A](n: Par[Int])(choices: List[Par[A]]): Par[A] = ???
+
+  // Exercise 13
+  def chooser[A, B](ps: Par[A])(choices: A => Par[B]): Par[B] =
+    es => choices(ps(es).get)(es)
+
+  def choice_ch[A](cond: Par[Boolean])(t: Par[A], f: Par[A]): Par[A] =
+    chooser(cond)(c => if (c) t else f)
+
+  def choiceN_ch[A](n: Par[Int])(choices: List[Par[A]]): Par[A] =
+    chooser(n)(choices(_))
+
+  def choiceMap_ch[K, V](key: Par[K])(choices: Map[K, Par[V]]): Par[V] =
+    chooser(key)(choices(_))
+
+  def flatMap[A, B](a: Par[A])(f: A => Par[B]): Par[B] =
+    es => f(a(es).get)(es)
+
+  // Exercise 14
+  def join[A](a: Par[Par[A]]): Par[A] =
+    // I dob't know why intellij complains about: es => (a(es).get)(es)
+    es => a(es).get()(es)
+
+  def flatMap_j[A, B](a: Par[A])(f: A => Par[B]): Par[B] =
+    join(map(a)(f))
+
+  def map2_fm_u[A,B,C](pa: Par[A], pb: Par[B])(f: (A,B) => C): Par[C] =
+    flatMap(pa)(a => flatMap(pb)(b => unit(f(a, b))))
+
   /* Gives us infix syntax for `Par`. */
   implicit def toParOps[A](p: Par[A]): ParOps[A] = new ParOps(p)
 

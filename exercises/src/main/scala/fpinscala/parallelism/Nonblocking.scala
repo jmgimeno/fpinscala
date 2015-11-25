@@ -105,6 +105,19 @@ object Nonblocking {
     def sequence[A](as: List[Par[A]]): Par[List[A]] =
       map(sequenceBalanced(as.toIndexedSeq))(_.toList)
 
+    // Copied from exercises 5 & 6
+    def parMap[A, B](ps: List[A])(f: A => B): Par[List[B]] = fork {
+      val fbs: List[Par[B]] = ps.map(asyncF(f))
+      sequence(fbs)
+    }
+
+    def parFilter[A](as: List[A])(f: A => Boolean): Par[List[A]] = fork {
+      val pairs: List[Par[(A, Boolean)]] = as.map(asyncF(a => (a, f(a))))
+      val conds: Par[List[(A, Boolean)]] = sequence(pairs)
+      map(conds)(_.filter(_._2).map(_._1))
+    }
+
+
     // exercise answers
 
     /*
