@@ -101,6 +101,10 @@ trait Stream[+A] {
       case _ => None
     }
 
+  // Added for implementing forAll in chapter 8
+  def zip[B](bs: Stream[B]): Stream[(A, B)] =
+    zipWith_uf(bs)((_, _))
+
   def zipAll[B](bs: Stream[B]): Stream[(Option[A], Option[B])] =
     unfold((this, bs)) {
       case (Cons(ha, ta), Cons(hb, tb)) => Some((Some(ha()), Some(hb())), (ta(), tb()))
