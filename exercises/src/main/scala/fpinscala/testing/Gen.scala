@@ -10,23 +10,23 @@ The library developed in this chapter goes through several iterations. This file
 shell, which you can fill in and modify while working through the chapter.
 */
 
-case class Prop(run: (TestCases, RNG) => Result) {
+case class Prop(run: (MaxSize, TestCases, RNG) => Result) {
 
   // Exercise 9
   def &&(p: Prop): Prop = Prop {
-    (n, rng) => {
-      run(n, rng) match {
-        case Passed => p.run(n, rng)
+    (max, n, rng) => {
+      run(max, n, rng) match {
+        case Passed => p.run(max, n, rng)
         case f => f
       }
     }
   }
 
   def ||(p: Prop): Prop = Prop {
-    (n, rng) => {
-      run(n, rng) match {
+    (max, n, rng) => {
+      run(max, n, rng) match {
         case Passed => Passed
-        case _ => p.run(n, rng)
+        case _ => p.run(max, n, rng)
       }
     }
   }
@@ -34,6 +34,7 @@ case class Prop(run: (TestCases, RNG) => Result) {
 
 object Prop {
 
+  type MaxSize = Int
   type TestCases = Int
   type FailedCase = String
   type SuccessCount = Int
@@ -50,7 +51,17 @@ object Prop {
     override def isFalsified: Boolean = true
   }
 
-  //Book's version
+  def randomStream[A](g: Gen[A])(rng: RNG): Stream[A] =
+    Stream.unfold(rng)(rng => Some(g.sample.run(rng)))
+
+  def buildMsg[A](s: A, e: Exception): String =
+    s"test case: $s\n" +
+    s"generated an exception: ${e.getMessage}\n" +
+    s"stack trace:\n\t${e.getStackTrace.mkString("\n\t")}"
+
+  def apply(f: (TestCases, RNG) => Result): Prop =
+    Prop { (_, n, rng) => f(n, rng) }
+
   def forAll[A](as: Gen[A])(f: A => Boolean): Prop =
     Prop {
       (n, rng) => randomStream(as)(rng).zip(Stream.from(0)).take(n).map {
@@ -60,13 +71,20 @@ object Prop {
       }.find(_.isFalsified).getOrElse(Passed)
     }
 
-  def randomStream[A](g: Gen[A])(rng: RNG): Stream[A] =
-    Stream.unfold(rng)(rng => Some(g.sample.run(rng)))
+  def forAll[A](g: SGen[A])(f: A => Boolean): Prop =
+    forAll(g.forSize)(f)
 
-  def buildMsg[A](s: A, e: Exception): String =
-    s"test case: $s\n" +
-    s"generated an exception: ${e.getMessage}\n" +
-    s"stack trace:\n\t${e.getStackTrace.mkString("\n\t")}"
+  def forAll[A](g: Int => Gen[A])(f: A => Boolean): Prop =
+    Prop { (max, n, rng) =>
+      val casesPerSize = (n + (max - 1)) / max
+      val props: Stream[Prop] =
+        Stream.from(0).take((n min max) + 1).map(i => forAll(g(i))(f))
+      val prop: Prop =
+        props.map(p => Prop { (max, _, rng) =>
+          p.run(max, casesPerSize, rng)
+        }).toList.reduce(_ && _)
+      prop.run(max, n, rng)
+    }
 }
 
 // Exercise 4
@@ -139,17 +157,36 @@ case class Gen[A](sample: State[RNG, A]) {
 
   def flatMap_fm[B](f: A => Gen[B]): Gen[B] = Gen(sample.flatMap(a => f(a).sample))
 
+  def listOfN(size: Gen[Int]): Gen[List[A]] =
+    size.flatMap(Gen.listOfN(_, this))
+
   def listOfN_for(size: Gen[Int]): Gen[List[A]] =
     for {
       s <- size
       l <- Gen.listOfN(s, this)
     } yield l
 
-  def listOfN_fm(size: Gen[Int]): Gen[List[A]] =
-    size.flatMap(Gen.listOfN(_, this))
+  // Exercise 10
+  def unsized: SGen[A] =
+    SGen(_ => this)
 }
 
-trait SGen[+A] {
+case class SGen[A](forSize: Int => Gen[A]) {
 
+  // Exercise 11
+  def map[B](f: A => B): SGen[B] =
+    SGen { forSize andThen (_ map f) }
+
+  def flatMap[B](f: A => Gen[B]): SGen[B] =
+    SGen { forSize andThen (_ flatMap f) }
 }
+
+object SGen {
+
+  // Exercise 12
+  def listOf[A](g: Gen[A]): SGen[List[A]] =
+    SGen { s => Gen.listOfN(s, g) }
+}
+
+
 
