@@ -16,7 +16,7 @@ case class Prop(run: (MaxSize, TestCases, RNG) => Result) {
   def &&(p: Prop): Prop = Prop {
     (max, n, rng) => {
       run(max, n, rng) match {
-        case Passed => p.run(max, n, rng)
+        case Passed | Proved => p.run(max, n, rng)
         case f => f
       }
     }
@@ -25,7 +25,7 @@ case class Prop(run: (MaxSize, TestCases, RNG) => Result) {
   def ||(p: Prop): Prop = Prop {
     (max, n, rng) => {
       run(max, n, rng) match {
-        case Passed => Passed
+        case notF @ (Passed | Proved) => notF
         case _ => p.run(max, n, rng)
       }
     }
@@ -49,6 +49,10 @@ object Prop {
 
   case class Falsified(failure: FailedCase, successes: SuccessCount) extends Result {
     override def isFalsified: Boolean = true
+  }
+
+  case object Proved extends Result {
+    override def isFalsified: Boolean = false
   }
 
   def randomStream[A](g: Gen[A])(rng: RNG): Stream[A] =
@@ -85,6 +89,72 @@ object Prop {
         }).toList.reduce(_ && _)
       prop.run(max, n, rng)
     }
+
+  def run(p: Prop,
+          maxSize: Int = 100,
+          testCases: Int = 100,
+          rng: RNG = RNG.Simple(System.currentTimeMillis)): Unit =
+    p.run(maxSize, testCases, rng) match {
+      case Falsified(msg, n) =>
+        println(s"! Falsified after $n passed tests:\n$msg.");
+      case Passed =>
+        println(s"+ OK, passed $testCases tests.")
+      case Proved =>
+        println(s"+ OK, proved property.")
+    }
+
+  def check(p: => Boolean): Prop =
+    Prop { (_, _, _) =>
+      if (p) Proved else Falsified("()", 0)
+    }
+}
+
+case class Gen[A](sample: State[RNG, A]) {
+
+  def map[B](f: A => B): Gen[B] = Gen(sample map f)
+
+  // Exercise 6
+
+  def flatMap[B](f: A => Gen[B]): Gen[B] =
+    Gen {
+      for {
+        a <- sample
+        b <- f(a).sample
+      } yield b
+    }
+
+  def flatMap_fm[B](f: A => Gen[B]): Gen[B] = Gen(sample.flatMap(a => f(a).sample))
+
+  def listOfN(n: Int): Gen[List[A]] =
+    Gen {
+      State.sequence(List.fill(n)(sample))
+    }
+
+  def listOfN(size: Gen[Int]): Gen[List[A]] =
+    size.flatMap(listOfN(_))
+
+  def listOfN_for(size: Gen[Int]): Gen[List[A]] =
+    for {
+      s <- size
+      l <- listOfN(s)
+    } yield l
+
+  // Exercise 10
+  def unsized: SGen[A] =
+    SGen(_ => this)
+
+  def map2[B,C](gb: Gen[B])(f: (A, B) => C): Gen[C] =
+    for {
+      a <- this
+      b <- gb
+    } yield f(a, b)
+
+  def **[B](g: Gen[B]): Gen[(A, B)] =
+    (this map2 g)((_, _))
+}
+
+object ** {
+  def unapply[A, B](p: (A, B)) = Some(p)
 }
 
 // Exercise 4
@@ -117,11 +187,6 @@ object Gen {
     }
   }
 
-  def listOfN[A](n: Int, g: Gen[A]): Gen[List[A]] =
-    Gen {
-      State.sequence(List.fill(n)(g.sample))
-    }
-
   // Exercise 7
   def union[A](g1: Gen[A], g2: Gen[A]): Gen[A] =
     for {
@@ -141,36 +206,6 @@ object Gen {
   }
 }
 
-case class Gen[A](sample: State[RNG, A]) {
-
-  def map[B](f: A => B): Gen[B] = Gen(sample map f)
-
-  // Exercise 6
-
-  def flatMap[B](f: A => Gen[B]): Gen[B] =
-    Gen {
-      for {
-        a <- sample
-        b <- f(a).sample
-      } yield b
-    }
-
-  def flatMap_fm[B](f: A => Gen[B]): Gen[B] = Gen(sample.flatMap(a => f(a).sample))
-
-  def listOfN(size: Gen[Int]): Gen[List[A]] =
-    size.flatMap(Gen.listOfN(_, this))
-
-  def listOfN_for(size: Gen[Int]): Gen[List[A]] =
-    for {
-      s <- size
-      l <- Gen.listOfN(s, this)
-    } yield l
-
-  // Exercise 10
-  def unsized: SGen[A] =
-    SGen(_ => this)
-}
-
 case class SGen[A](forSize: Int => Gen[A]) {
 
   // Exercise 11
@@ -185,7 +220,12 @@ object SGen {
 
   // Exercise 12
   def listOf[A](g: Gen[A]): SGen[List[A]] =
-    SGen { s => Gen.listOfN(s, g) }
+    SGen { s => g.listOfN(s) }
+
+  // Exercise 13
+  def listOf1[A](g: Gen[A]): SGen[List[A]] =
+    SGen { s => g.listOfN(s max 1) }
+
 }
 
 
