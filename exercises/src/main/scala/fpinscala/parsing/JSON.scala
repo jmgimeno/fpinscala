@@ -17,46 +17,35 @@ object JSON {
     import P._
     val spaces = char(' ').many.slice
 
+    def strip[A](p: Parser[A]): Parser[A] = for {
+      _ <- spaces
+      a <- p
+      _ <- spaces
+    } yield a
+
     // Exercise 9
-    val pnull: Parser[JSON] = for {
-      _ <- spaces
-      _ <- string("null")
-      _ <- spaces
-    } yield JNull
+    val pnull: Parser[JSON] =
+      strip(string("null")) map (_ => JNull)
 
-    val pnumber: Parser[JSON] = for {
-      _ <- spaces
-      n <- "\\d+(\\.\\d*)?".r
-      _ <- spaces
-    } yield JNumber(n.toDouble)
+    val pnumber: Parser[JSON] =
+      strip("\\d+(\\.\\d*)?".r) map (n => JNumber(n.toDouble))
 
-    val pbool: Parser[JSON] = for {
-      _ <- spaces
-      b <- "true" | "false"
-      _ <- spaces
-    } yield JBool(b.toBoolean)
+    val pbool: Parser[JSON] =
+      strip("true" | "false") map (b => JBool(b.toBoolean))
 
     val ppair = for {
-      _ <- spaces
-      k <- "[A-Za-z]+".r
-      _ <- spaces
+      k <- strip("[A-Za-z]+".r)
       _ <- char(':')
-      _ <- spaces
       v <- pjson
     } yield (k, v)
 
     val parray = for {
-      _ <- spaces
-      _ <- char('[')
-      _ <- spaces
+      _ <- strip(char('['))
       l <- (for {
-        _ <- spaces
         v <- pjson
-        _ <- spaces | char(',')
+        _ <- char(',') | succeed("")
       } yield v).many
-      _ <- spaces
-      _ <- char(']')
-      _ <- spaces
+      _ <- strip(char(']'))
     } yield JArray(l.toIndexedSeq)
 
     def pjson: Parser[JSON] = pnull | pnumber | pbool | parray
