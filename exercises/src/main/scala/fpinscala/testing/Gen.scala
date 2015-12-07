@@ -109,7 +109,7 @@ object Prop {
     }
 }
 
-case class Gen[A](sample: State[RNG, A]) {
+case class Gen[+A](sample: State[RNG, A]) {
 
   def map[B](f: A => B): Gen[B] = Gen(sample map f)
 
@@ -153,9 +153,7 @@ case class Gen[A](sample: State[RNG, A]) {
     (this map2 g)((_, _))
 }
 
-object ** {
-  def unapply[A, B](p: (A, B)) = Some(p)
-}
+
 
 // Exercise 4
 object Gen {
@@ -204,19 +202,6 @@ object Gen {
       a <- if (d <= limit) g1._1 else g2._1
     } yield a
   }
-}
-
-case class SGen[A](forSize: Int => Gen[A]) {
-
-  // Exercise 11
-  def map[B](f: A => B): SGen[B] =
-    SGen { forSize andThen (_ map f) }
-
-  def flatMap[B](f: A => Gen[B]): SGen[B] =
-    SGen { forSize andThen (_ flatMap f) }
-}
-
-object SGen {
 
   // Exercise 12
   def listOf[A](g: Gen[A]): SGen[List[A]] =
@@ -226,7 +211,37 @@ object SGen {
   def listOf1[A](g: Gen[A]): SGen[List[A]] =
     SGen { s => g.listOfN(s max 1) }
 
+  def listOfN[A](n: Int, g: Gen[A]): Gen[List[A]] =
+    Gen {
+      State.sequence(List.fill(n)(g.sample))
+    }
+
+  def stringN(n: Int): Gen[String] =
+    listOfN(n, choose(0,127)).map(_.map(_.toChar).mkString)
+
+  val string: SGen[String] = SGen(stringN)
+
+  object ** {
+    def unapply[A, B](p: (A, B)) = Some(p)
+  }
 }
+
+case class SGen[+A](forSize: Int => Gen[A]) {
+
+  def apply(n: Int): Gen[A] = forSize(n)
+
+  // Exercise 11
+  def map[B](f: A => B): SGen[B] =
+    SGen { forSize andThen (_ map f) }
+
+  def flatMap[B](f: A => Gen[B]): SGen[B] =
+    SGen { forSize andThen (_ flatMap f) }
+
+  def **[B](s2: SGen[B]): SGen[(A,B)] =
+    SGen(n => apply(n) ** s2(n))
+
+}
+
 
 
 

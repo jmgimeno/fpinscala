@@ -47,7 +47,7 @@ gLU.sample.run(rng)
 val throws = Prop.forAll(Gen.choose(0, 5))(i => 5 % i <= i)
 
 throws.run(10, 100, rng)
-val sizedListInt = SGen.listOf(gInt)
+val sizedListInt = Gen.listOf(gInt)
 sizedListInt.forSize(0).sample.run(rng)
 sizedListInt.forSize(1).sample.run(rng)
 sizedListInt.forSize(2).sample.run(rng)
