@@ -1,9 +1,11 @@
 package fpinscala.parsing
 
+import fpinscala.testing.SGen
+
 import language.higherKinds
 import scala.util.matching.Regex
 
-trait Parsers[ParseError, Parser[+_]] { self => // so inner classes may call methods of trait
+trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trait
 
   def run[A](p: Parser[A])(input: String): Either[ParseError, A]
 
@@ -11,8 +13,12 @@ trait Parsers[ParseError, Parser[+_]] { self => // so inner classes may call met
   implicit def regex(r: Regex): Parser[String]
 
   def slice[A](p: Parser[A]): Parser[String]
+  def label[A](msg: String)(p: Parser[A]): Parser[A]
+  def scope[A](msg: String)(p: Parser[A]): Parser[A]
+  def attempt[A](p: Parser[A]): Parser[A]
   def or[A](p1: Parser[A], p2: => Parser[A]): Parser[A]
   def flatMap[A, B](p: Parser[A])(f: A => Parser[B]): Parser[B]
+
   def succeed[A](a: A): Parser[A] = string("") map (_ => a)
 
   val numA: Parser[Int] = char('a').many.map(_.size)
@@ -59,6 +65,10 @@ trait Parsers[ParseError, Parser[+_]] { self => // so inner classes may call met
   implicit def asStringParser[A](a: A)(implicit f: A => Parser[String]): ParserOps[String] =
     ParserOps(f(a))
 
+  def errorLocation(e: ParseError): Location
+
+  def errorMessage(e: ParseError): String
+
   case class ParserOps[A](p: Parser[A]) {
     def |[B >: A](p2: => Parser[B]): Parser[B] = self.or(p, p2)
     def or[B >: A](p2: => Parser[B]): Parser[B] = self.or(p, p2)
@@ -70,12 +80,13 @@ trait Parsers[ParseError, Parser[+_]] { self => // so inner classes may call met
     def product[B](p2: => Parser[B]): Parser[(A, B)] = self.product(p, p2)
     def **[B](p2: => Parser[B]): Parser[(A, B)] = self.product(p, p2)
     def map2[B, C](p2: => Parser[B])(f: (A, B) => C): Parser[C] = self.map2(p, p2)(f)
+    def attempt: Parser[A] = self.attempt(p)
   }
 
   object Laws {
 
     import fpinscala.testing.{Prop, Gen}
-    import fpinscala.testing.Prop._
+    import fpinscala.testing.Prop.forAll
 
     def equal[A](p1: Parser[A], p2: Parser[A])(in: Gen[String]): Prop =
       forAll(in)(s => run(p1)(s) == run(p2)(s))
@@ -96,13 +107,22 @@ trait Parsers[ParseError, Parser[+_]] { self => // so inner classes may call met
     def productLaw[A, B](p: Parser[A], p2: Parser[B])(in: Gen[String]): Prop =
       equal(slice(p ** p2), slice(p).map2(slice(p2))(_ ++ _))(in)
 
+    def labelLaw[A](p: Parser[A], inputs: SGen[String]): Prop =
+      forAll(inputs ** Gen.string) { case (input, msg) =>
+        run(label(msg)(p))(input) match {
+          case Left(e) => errorMessage(e) == msg
+          case _ => true
+        }}
   }
 }
 
 case class Location(input: String, offset: Int = 0) {
 
   lazy val line = input.slice(0,offset+1).count(_ == '\n') + 1
-  lazy val col = input.slice(0,offset+1).reverse.indexOf('\n')
+  lazy val col = input.slice(0,offset+1).lastIndexOf('\n') match {
+    case -1        => offset + 1
+    case lineStart => offset - lineStart
+  }
 
   def toError(msg: String): ParseError =
     ParseError(List((this, msg)))

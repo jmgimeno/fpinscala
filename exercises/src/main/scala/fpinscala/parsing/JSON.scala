@@ -13,9 +13,11 @@ object JSON {
   case class JArray(get: IndexedSeq[JSON]) extends JSON
   case class JObject(get: Map[String, JSON]) extends JSON
 
-  def jsonParser[Err, Parser[+_]](P: Parsers[Err, Parser]): Parser[JSON] = {
+  def jsonParser[Parser[+_]](P: Parsers[Parser]): Parser[JSON] = {
+
     import P._
-    val spaces = char(' ').many.slice
+
+    val spaces = char(' ').many
 
     def strip[A](p: Parser[A]): Parser[A] = for {
       _ <- spaces
@@ -24,22 +26,22 @@ object JSON {
     } yield a
 
     // Exercise 9
-    val pnull: Parser[JSON] =
+    def pnull: Parser[JSON] =
       strip(string("null")) map (_ => JNull)
 
-    val pnumber: Parser[JSON] =
+    def pnumber: Parser[JSON] =
       strip("\\d+(\\.\\d*)?".r) map (n => JNumber(n.toDouble))
 
-    val pbool: Parser[JSON] =
+    def pbool: Parser[JSON] =
       strip("true" | "false") map (b => JBool(b.toBoolean))
 
-    val ppair = for {
-      k <- strip("[A-Za-z]+".r)
+    def ppair = for {
+      k <- strip("\"[A-Za-z]+\"".r)
       _ <- char(':')
       v <- pjson
     } yield (k, v)
 
-    val parray = for {
+    def parray = for {
       _ <- strip(char('['))
       l <- (for {
         v <- pjson
