@@ -11,7 +11,7 @@ object MyParserTypes {
   sealed trait Result[+A] {
 
     def mapError(f: ParseError => ParseError): Result[A] = this match {
-      case Failure(e,c) => Failure(f(e),c)
+      case Failure(e) => Failure(f(e))
       case _ => this
     }
   }
