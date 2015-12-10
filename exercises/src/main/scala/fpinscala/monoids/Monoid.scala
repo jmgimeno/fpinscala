@@ -72,16 +72,15 @@ object Monoid {
 
   // Exercise 6
   def foldRight[A, B](as: List[A])(z: B)(f: (A, B) => B): B =
-    foldMap(as, new Monoid[B => B] {
-      override def op(a1: B => B, a2: B => B) = a1 compose a2
-      override def zero = identity[B]
-    })(a => b => f(a, b))(z)
+    foldMap(as, endoMonoid[B])(f.curried)(z)
+
+  def dual[A](m: Monoid[A]): Monoid[A] = new Monoid[A] {
+    def op(x: A, y: A): A = m.op(y, x)
+    val zero = m.zero
+  }
 
   def foldLeft[A, B](as: List[A])(z: B)(f: (B, A) => B): B =
-    foldMap(as, new Monoid[B => B] {
-      override def op(a1: B => B, a2: B => B) = a1 andThen a2
-      override def zero = identity[B]
-    })(a => b => f(b, a))(z)
+    foldMap(as, dual(endoMonoid[B]))(a => b => f(b, a))(z)
 
   // Exercise 7
   def foldMapV[A, B](as: IndexedSeq[A], m: Monoid[B])(f: A => B): B = {
@@ -147,82 +146,113 @@ object Monoid {
     }
   }
 
+  // Exercise 16
   def productMonoid[A,B](A: Monoid[A], B: Monoid[B]): Monoid[(A, B)] =
-    sys.error("todo")
+    new Monoid[(A, B)] {
+      override def op(a1: (A, B), a2: (A, B)): (A, B) =
+        (A.op(a1._1, a2._1), B.op(a1._2, a2._2))
+      override def zero: (A, B) =
+        (A.zero, B.zero)
+    }
 
+  // Exercise 17
   def functionMonoid[A,B](B: Monoid[B]): Monoid[A => B] =
-    sys.error("todo")
+    new Monoid[A => B] {
+      override def op(a1: A => B, a2: A => B): A => B =
+        a => B.op(a1(a), a2(a))
+      override def zero: A => B =
+        _ => B.zero
+    }
 
   def mapMergeMonoid[K,V](V: Monoid[V]): Monoid[Map[K, V]] =
-    sys.error("todo")
+    new Monoid[Map[K, V]] {
+      override def op(a1: Map[K, V], a2: Map[K, V]): Map[K, V] =
+        (a1.keySet ++ a2.keySet).foldLeft(zero) { (acc, k) =>
+          acc.updated(k, V.op(a1.getOrElse(k, V.zero),
+                              a2.getOrElse(k, V.zero)))}
+      override def zero: Map[K, V] = Map[K, V]()
+    }
 
+  // Exercise 18
   def bag[A](as: IndexedSeq[A]): Map[A, Int] =
-    sys.error("todo")
+    foldMapV(as, mapMergeMonoid[A, Int](intAddition))(a => Map(a -> 1))
 }
 
+// Exercise 12
 trait Foldable[F[_]] {
   import Monoid._
 
   def foldRight[A, B](as: F[A])(z: B)(f: (A, B) => B): B =
-    sys.error("todo")
+    foldMap(as)(f.curried)(endoMonoid[B])(z)
 
   def foldLeft[A, B](as: F[A])(z: B)(f: (B, A) => B): B =
-    sys.error("todo")
+    foldMap(as)(a => (b: B) => f(b, a))(dual(endoMonoid[B]))(z)
 
   def foldMap[A, B](as: F[A])(f: A => B)(mb: Monoid[B]): B =
-    sys.error("todo")
+    foldRight(as)(mb.zero)((a, b) => mb.op(f(a), b))
 
   def concatenate[A](as: F[A])(m: Monoid[A]): A =
-    sys.error("todo")
+    foldLeft(as)(m.zero)(m.op)
 
+  // Exercise 15
   def toList[A](as: F[A]): List[A] =
-    sys.error("todo")
+    foldRight(as)(List[A]())(_ :: _)
 }
 
 object ListFoldable extends Foldable[List] {
   override def foldRight[A, B](as: List[A])(z: B)(f: (A, B) => B) =
-    sys.error("todo")
+    as.foldRight(z)(f)
   override def foldLeft[A, B](as: List[A])(z: B)(f: (B, A) => B) =
-    sys.error("todo")
+    as.foldLeft(z)(f)
   override def foldMap[A, B](as: List[A])(f: A => B)(mb: Monoid[B]): B =
-    sys.error("todo")
+    as.foldLeft(mb.zero)((b, a) => mb.op(b, f(a)))
+
+  override def toList[A](as: List[A]): List[A] = as
 }
 
 object IndexedSeqFoldable extends Foldable[IndexedSeq] {
   override def foldRight[A, B](as: IndexedSeq[A])(z: B)(f: (A, B) => B) =
-    sys.error("todo")
+    as.foldRight(z)(f)
   override def foldLeft[A, B](as: IndexedSeq[A])(z: B)(f: (B, A) => B) =
-    sys.error("todo")
+    as.foldLeft(z)(f)
   override def foldMap[A, B](as: IndexedSeq[A])(f: A => B)(mb: Monoid[B]): B =
-    sys.error("todo")
+    Monoid.foldMapV(as, mb)(f)
 }
 
 object StreamFoldable extends Foldable[Stream] {
   override def foldRight[A, B](as: Stream[A])(z: B)(f: (A, B) => B) =
-    sys.error("todo")
+    as.foldRight(z)(f)
   override def foldLeft[A, B](as: Stream[A])(z: B)(f: (B, A) => B) =
-    sys.error("todo")
+    as.foldLeft(z)(f)
 }
 
+// Exercise 13
 sealed trait Tree[+A]
 case class Leaf[A](value: A) extends Tree[A]
 case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
 
 object TreeFoldable extends Foldable[Tree] {
-  override def foldMap[A, B](as: Tree[A])(f: A => B)(mb: Monoid[B]): B =
-    sys.error("todo")
-  override def foldLeft[A, B](as: Tree[A])(z: B)(f: (B, A) => B) =
-    sys.error("todo")
-  override def foldRight[A, B](as: Tree[A])(z: B)(f: (A, B) => B) =
-    sys.error("todo")
+  override def foldMap[A, B](as: Tree[A])(f: A => B)(mb: Monoid[B]): B = as match {
+    case Leaf(a) => f(a)
+    case Branch(l, r) => mb.op(foldMap(l)(f)(mb), foldMap(r)(f)(mb))
+  }
+  override def foldLeft[A, B](as: Tree[A])(z: B)(f: (B, A) => B): B = as match {
+    case Leaf(a) => f(z, a)
+    case Branch(l, r) => foldLeft(r)(foldLeft(l)(z)(f))(f)
+  }
+  override def foldRight[A, B](as: Tree[A])(z: B)(f: (A, B) => B): B = as match {
+    case Leaf(a) => f(a, z)
+    case Branch(l, r) => foldRight(l)(foldRight(r)(z)(f))(f)
+  }
 }
 
+// Exercise 14
 object OptionFoldable extends Foldable[Option] {
   override def foldMap[A, B](as: Option[A])(f: A => B)(mb: Monoid[B]): B =
-    sys.error("todo")
+    as.fold(mb.zero)(f)
   override def foldLeft[A, B](as: Option[A])(z: B)(f: (B, A) => B) =
-    sys.error("todo")
+    as.fold(z)(f(z, _))
   override def foldRight[A, B](as: Option[A])(z: B)(f: (A, B) => B) =
-    sys.error("todo")
+    as.fold(z)(f(_, z))
 }
 

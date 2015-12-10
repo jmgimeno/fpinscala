@@ -24,3 +24,5 @@ count(" loren ")
 count("loren ipsum dolor sit amet")
 count(" loren    ipsum     dolor     sit     amet    ")
 
+
+bag(Vector(1, 2, 1, 3, 4, 1, 2))
