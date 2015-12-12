@@ -194,39 +194,39 @@ object State {
     ss.foldRight[State[S, List[A]]](unit(Nil))(lift2(_ :: _))
 
   // Exercise 11
-  def get[S]: State[S, S] = State(s => (s, s))
-  def set[S](s: S): State[S, Unit] = State(_ => ((), s))
+  def getState[S]: State[S, S] = State(s => (s, s))
+  def setState[S](s: S): State[S, Unit] = State(_ => ((), s))
 
-  def modify[S](f: S => S): State[S, Unit] =
+  def modifyState[S](f: S => S): State[S, Unit] =
     for {
-      s <- get
-      _ <- set(f(s))
+      s <- getState
+      _ <- setState(f(s))
     } yield ()
 
   type MachineState = State[Machine, (Int, Int)]
 
   def coin: MachineState =
     for {
-      m <- get
-      _ <- set {
+      m <- getState
+      _ <- setState {
         if (m.locked && m.candies > 0)
           Machine(locked = false, m.candies, m.coins+1)
         else
           m
       }
-      nm <- get
+      nm <- getState
     } yield (nm.candies, nm.coins)
 
   def turn: MachineState =
     for {
-      m <- get
-      _ <- set {
+      m <- getState
+      _ <- setState {
         if (!m.locked && m.candies > 0)
           Machine(locked = true, m.candies-1, m.coins)
         else
           m
       }
-      nm <- get
+      nm <- getState
     } yield (nm.candies, nm.coins)
 
   def inputToState(input: Input): MachineState = input match {

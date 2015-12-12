@@ -14,8 +14,8 @@ object Candy {
     }
 
   def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = for {
-    _ <- sequence(inputs map (update andThen modify))
-    s <- get
+    _ <- sequence(inputs map (update andThen modifyState))
+    s <- getState
   } yield (s.coins, s.candies)
 }
 
