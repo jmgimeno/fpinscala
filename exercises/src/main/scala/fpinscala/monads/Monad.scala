@@ -56,6 +56,19 @@ trait Monad[M[_]] extends Functor[M] {
     as.foldRight(unit(List[A]()))((a, mas) =>
       flatMap(f(a))(b => if (b) map2(unit(a), mas)(_ :: _) else mas))
 
+  def filterM_answer[A](ms: List[A])(f: A => M[Boolean]): M[List[A]] =
+    ms.foldRight(unit(List[A]()))((x,y) =>
+      compose(f, if (_) map2(unit(x),y)(_ :: _) else y)(x))
+
+  def filterM_booklet[A](ms: List[A])(f: A => M[Boolean]): M[List[A]] =
+    ms match {
+      case Nil => unit(Nil)
+      case h :: t => flatMap(f(h))(b =>
+        if (b) map(filterM_booklet(t)(f))(h :: _)
+        else filterM_booklet(t)(f)
+      )
+    }
+
   // Exercise 7
   def compose[A,B,C](f: A => M[B], g: B => M[C]): A => M[C] =
     a => flatMap(f(a))(g)
@@ -64,6 +77,9 @@ trait Monad[M[_]] extends Functor[M] {
   // Implement in terms of `compose`:
   def _flatMap[A,B](ma: M[A])(f: A => M[B]): M[B] =
     compose(identity[M[A]], f)(ma)
+
+  def _flatMap_booklet[A,B](ma: M[A])(f: A => M[B]): M[B] =
+    compose((_: Unit) => ma, f)(())
 
   // Exercise 12
   def join[A](mma: M[M[A]]): M[A] =
@@ -159,4 +175,6 @@ case class Id[A](value: A) {
   def flatMap[B](f: A => Id[B]): Id[B] = f(value)
 }
 
-
+object Reader {
+  def ask[R]: Reader[R, R] = Reader(r => r)
+}
