@@ -58,7 +58,7 @@ trait Monad[M[_]] extends Functor[M] {
 
   def filterM_answer[A](ms: List[A])(f: A => M[Boolean]): M[List[A]] =
     ms.foldRight(unit(List[A]()))((x,y) =>
-      compose(f, if (_) map2(unit(x),y)(_ :: _) else y)(x))
+      compose(f, (b: Boolean) => if (b) map2(unit(x),y)(_ :: _) else y)(x))
 
   def filterM_booklet[A](ms: List[A])(f: A => M[Boolean]): M[List[A]] =
     ms match {
