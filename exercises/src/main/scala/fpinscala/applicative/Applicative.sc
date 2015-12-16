@@ -2,7 +2,7 @@ import java.util.Date
 import java.text.{ParseException, SimpleDateFormat}
 
 import fpinscala.applicative.Applicative._
-import fpinscala.applicative.{Validation, Success, Failure}
+import fpinscala.applicative.{Applicative, Validation, Success, Failure}
 
 val s1 = Stream(1, 2, 3)
 val s2 = Stream(4, 5)
@@ -45,3 +45,17 @@ validWebForm("JM", "1967-10-04", "0123456789")
 validWebForm("", "1967-10-04", "0123456789")
 validWebForm("", "4-10-1967", "0123456789")
 validWebForm("", "4-10-1967", "123456789")
+
+val optionApplicative: Applicative[Option] = new Applicative[Option] {
+  override def unit[A](a: => A): Option[A] = Some(a)
+  override def map2[A, B, C](oa: Option[A],
+                             ob: Option[B])
+                            (f: (A, B) => C): Option[C] =
+    (oa, ob) match {
+      case (Some(a), Some(b)) => Some(f(a, b))
+      case _ => None
+    }
+}
+
+optionApplicative.sequenceMap(Map(1->Some(1), 2->Some(2)))
+optionApplicative.sequenceMap(Map(1->None, 2->Some(2)))
