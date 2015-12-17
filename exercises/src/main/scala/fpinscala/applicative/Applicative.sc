@@ -2,7 +2,9 @@ import java.util.Date
 import java.text.{ParseException, SimpleDateFormat}
 
 import fpinscala.applicative.Applicative._
-import fpinscala.applicative.{Applicative, Validation, Success, Failure}
+import fpinscala.applicative._
+
+import fpinscala.applicative.Traverse._
 
 val s1 = Stream(1, 2, 3)
 val s2 = Stream(4, 5)
@@ -59,3 +61,34 @@ val optionApplicative: Applicative[Option] = new Applicative[Option] {
 
 optionApplicative.sequenceMap(Map(1->Some(1), 2->Some(2)))
 optionApplicative.sequenceMap(Map(1->None, 2->Some(2)))
+
+val listApplicative: Applicative[List] = new Applicative[List] {
+  override def unit[A](a: => A): List[A] = List(a)
+  override def map2[A, B, C](fa: List[A], fb: List[B])(f: (A, B) => C): List[C] =
+    for {a <- fa; b <- fb } yield f(a, b)
+}
+
+val zipApplicative: Applicative[List] = new Applicative[List] {
+  override def unit[A](a: => A): List[A] = List(a)
+  override def map2[A, B, C](fa: List[A], fb: List[B])(f: (A, B) => C): List[C] =
+    fa zip fb map f.tupled
+}
+
+val t = Tree(List(1), List(Tree(List(2, 3)), Tree(List(4))))
+
+treeTraverse.sequence(t)(listApplicative)
+treeTraverse.sequence(t)(zipApplicative)
+
+treeTraverse.zipWithIndex(t)
+
+treeTraverse.toList(t)
+
+listTraverse.reverse(List(1, 2, 3))
+treeTraverse.reverse(t)
+
+val t2 = Tree(List(5, 6), List(Tree(List(7), List(Tree(List(8))))))
+
+treeTraverse.toList(treeTraverse.reverse(t)) ++ treeTraverse.toList(treeTraverse.reverse(t2))
+listTraverse.reverse(treeTraverse.toList(t2) ++ treeTraverse.toList(t))
+
+listTraverse.foldLeft(List(1, 2, 3))(List[Int]())((l, i) => i :: l)
