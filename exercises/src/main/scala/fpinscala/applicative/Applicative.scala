@@ -3,11 +3,8 @@ package applicative
 
 import monads.Functor
 import state._
-import State._
-import StateUtil._ // defined at bottom of this file
 import monoids._
-import language.higherKinds
-import language.implicitConversions
+import scala.language.{reflectiveCalls, higherKinds, implicitConversions}
 
 trait Applicative[F[_]] extends Functor[F] { self =>
 
@@ -131,8 +128,22 @@ object Monad {
       st flatMap f
   }
 
-  def composeM[F[_],N[_]](implicit F: Monad[F], N: Monad[N], T: Traverse[N]):
-    Monad[({type f[x] = F[N[x]]})#f] = ???
+  // Exercise 20
+  def composeM[F[_],G[_]](implicit F: Monad[F], G: Monad[G], T: Traverse[G]):
+    Monad[({type f[x] = F[G[x]]})#f] = new Monad[({type f[x] = F[G[x]]})#f] {
+    override def unit[A](a: => A): F[G[A]] =
+      F.unit(G.unit(a))
+    override def join[A](fgfga: F[G[F[G[A]]]]): F[G[A]] =
+      F.map(F.flatMap(fgfga)(gfga => T.sequence(gfga)))(G.join)
+  }
+}
+
+case class OptionT[M[_], A](value: M[Option[A]])(implicit M: Monad[M]) {
+  def flatMap[B](f: A => OptionT[M, B]): OptionT[M, B] =
+    OptionT( M.flatMap(value) {
+      case None => M.unit(None)
+      case Some(a) => f(a).value
+    })
 }
 
 sealed trait Validation[+E, +A]
@@ -172,14 +183,14 @@ object Applicative {
 
   type Const[A, B] = A
 
-  implicit def monoidApplicative[M](M: Monoid[M]) =
+  implicit def monoidApplicative[M](M: Monoid[M]): Applicative[({type f[x] = Const[M, x]})#f] =
     new Applicative[({ type f[x] = Const[M, x] })#f] {
       def unit[A](a: => A): M = M.zero
       override def apply[A,B](m1: M)(m2: M): M = M.op(m1, m2)
     }
 }
 
-trait Traverse[F[_]] extends Functor[F] with Foldable[F] {
+trait Traverse[F[_]] extends Functor[F] with Foldable[F] { self =>
 
   def traverse[G[_]:Applicative,A,B](fa: F[A])(f: A => G[B]): G[F[B]] =
     sequence(map(fa)(f))
@@ -229,10 +240,20 @@ trait Traverse[F[_]] extends Functor[F] with Foldable[F] {
   override def foldLeft[A,B](fa: F[A])(z: B)(f: (B, A) => B): B =
     mapAccum(fa, z)((a, b) => ((), f(b, a)))._2
 
+  // Exercise 18
   def fuse[G[_],H[_],A,B](fa: F[A])(f: A => G[B], g: A => H[B])
-                         (implicit G: Applicative[G], H: Applicative[H]): (G[F[B]], H[F[B]]) = ???
+                         (implicit G: Applicative[G], H: Applicative[H]): (G[F[B]], H[F[B]]) =
+    traverse[({type f[x] = (G[x], H[x])})#f, A, B](fa)(a => (f(a), g(a)))(G product H)
 
-  def compose[G[_]](implicit G: Traverse[G]): Traverse[({type f[x] = F[G[x]]})#f] = ???
+  // Exercise 19
+  def compose[G[_]](implicit G: Traverse[G]): Traverse[({type f[x] = F[G[x]]})#f] =
+    new Traverse[({type f[x] = F[G[x]]})#f] {
+      override def map[A, B](fga: F[G[A]])(f: (A) => B): F[G[B]] =
+        self.map(fga)(ga => G.map(ga)(f))
+      override def traverse[H[_] : Applicative, A, B](fga: F[G[A]])(f: (A) => H[B]): H[F[G[B]]] =
+        self.traverse(fga)((ga: G[A]) => G.traverse(ga)(f))
+
+    }
 }
 
 case class Tree[+A](head: A, tail: List[Tree[A]] = List())
@@ -273,14 +294,3 @@ object Traverse {
   }
 }
 
-// The `get` and `set` functions on `State` are used above,
-// but aren't in the `exercises` subproject, so we include
-// them here
-object StateUtil {
-
-  def get[S]: State[S, S] =
-    State(s => (s, s))
-
-  def set[S](s: S): State[S, Unit] =
-    State(_ => ((), s))
-}
