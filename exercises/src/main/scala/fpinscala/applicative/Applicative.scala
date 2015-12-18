@@ -233,7 +233,10 @@ trait Traverse[F[_]] extends Functor[F] with Foldable[F] { self =>
   // Exercise 16
   def reverse[A](fa: F[A]): F[A] = {
     val ras = mapAccum(fa, List[A]())((a, s) => ((), a :: s))._2
-    mapAccum(fa, ras)((_, as) => (as.head, as.tail))._1
+    mapAccum(fa, ras){
+      case (_, a :: as) => (a, as)
+      case _ => sys.error("never")
+    }._1
   }
 
   // Exercise 17
