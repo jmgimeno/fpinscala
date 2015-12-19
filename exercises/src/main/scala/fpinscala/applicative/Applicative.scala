@@ -130,11 +130,14 @@ object Monad {
 
   // Exercise 20
   def composeM[F[_],G[_]](implicit F: Monad[F], G: Monad[G], T: Traverse[G]):
-    Monad[({type f[x] = F[G[x]]})#f] = new Monad[({type f[x] = F[G[x]]})#f] {
-    override def unit[A](a: => A): F[G[A]] =
-      F.unit(G.unit(a))
-    override def join[A](fgfga: F[G[F[G[A]]]]): F[G[A]] =
-      F.map(F.flatMap(fgfga)(gfga => T.sequence(gfga)))(G.join)
+      Monad[({type f[x] = F[G[x]]})#f] = new Monad[({type f[x] = F[G[x]]})#f] {
+      override def unit[A](a: => A): F[G[A]] =
+        F.unit(G.unit(a))
+      override def join[A](fgfga: F[G[F[G[A]]]]): F[G[A]] =
+        F.map(F.flatMap(fgfga)(gfga => T.sequence(gfga)))(G.join)
+
+      override def flatMap[A, B](fga: F[G[A]])(f: (A) => F[G[B]]): F[G[B]] =
+        F.flatMap(fga)(ga => F.map(T.traverse(ga)(f))(G.join))
   }
 }
 
@@ -269,8 +272,6 @@ object Traverse {
       val G = implicitly[Applicative[G]]
       as.foldRight(G.unit(List[B]()))((a, fbs) => G.map2(f(a), fbs)(_ :: _))
     }
-//    override def traverse[G[_], A, B](as: List[A])(f: (A) => G[B])(implicit G: Applicative[G]): G[List[B]] =
-//      as.foldRight(G.unit(List[B]()))((a, fbs) => G.map2(f(a), fbs)(_ :: _))
   }
   val optionTraverse = new Traverse[Option] {
     override def traverse[G[_] : Applicative, A, B](fa: Option[A])(f: (A) => G[B]): G[Option[B]] = {
@@ -285,6 +286,12 @@ object Traverse {
     override def traverse[G[_] : Applicative, A, B](fa: Tree[A])(f: (A) => G[B]): G[Tree[B]] = {
       val G = implicitly[Applicative[G]]
       G.map2(f(fa.head), G.sequence(fa.tail.map(traverse(_)(f))))(Tree(_, _))
+    }
+  }
+  val treeTraverse_booklet = new Traverse[Tree] {
+    override def traverse[G[_] : Applicative, A, B](fa: Tree[A])(f: (A) => G[B]): G[Tree[B]] = {
+      val G = implicitly[Applicative[G]]
+      G.map2(f(fa.head), listTraverse.traverse(fa.tail)(traverse(_)(f)))(Tree(_, _))
     }
   }
   def mapTraverse[K] = new Traverse[({type l[x] = Map[K, x]})#l] {
