@@ -184,6 +184,9 @@ object IO2a {
   }
 
   def printLine(s: String): IO[Unit] =
+    Suspend(() => println(s))
+
+  def printLine_orig(s: String): IO[Unit] =
     Suspend(() => Return(println(s)))
 
   val p = IO.forever(printLine("Still going..."))
