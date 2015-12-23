@@ -9,7 +9,6 @@ IO2a.run(ioHello)
 val ioHelloBad = IO2a.printLine_orig("Hello IO !!!!")
 IO2a.run(ioHelloBad)
 import fpinscala.iomonad.IO2b
-
 def tailRecFact(n: Int): IO2b.TailRec[Int] =
   if (n == 0) IO2b.Return(1)
   else IO2b.TailRec.suspend(tailRecFact(n-1)
@@ -34,9 +33,7 @@ IO2b.run(tFibo6)
 import fpinscala.iomonad.IO2c
 import fpinscala.parallelism.Nonblocking._
 import java.util.concurrent.Executors
-
 val ES = Executors.newFixedThreadPool(4)
-
 def asyncFact(n: Int): IO2c.Async[Int] =
   if (n == 0) IO2c.Suspend(Par.unit(1))
   else asyncFact(n-1) flatMap (f =>
