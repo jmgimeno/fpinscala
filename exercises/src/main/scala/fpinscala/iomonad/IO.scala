@@ -1,6 +1,7 @@
 package fpinscala.iomonad
 
 import fpinscala.iomonad
+import fpinscala.parallelism.Nonblocking.Future
 
 import language.postfixOps
 import language.higherKinds
@@ -618,7 +619,21 @@ object IO3 {
 
   def read(file: AsynchronousFileChannel,
            fromPosition: Long,
-           numBytes: Int): Par[Either[Throwable, Array[Byte]]] = ???
+           numBytes: Int): Par[Either[Throwable, Array[Byte]]] = Par.async {
+    (cb: Either[Throwable, Array[Byte]] => Unit) => {
+      val buf = ByteBuffer.allocate(numBytes)
+      val handler = new CompletionHandler[Integer, Object] {
+        def completed(result: Integer, attachment: Object): Unit = {
+          val array = new Array[Byte](result)
+          buf.slice.get(array, 0, result)
+          cb(Right(array)
+        }
+        def failed(exc: Throwable, attachment: Object): Unit =
+          cb(Left(exc))
+      }
+      file.read(buf, fromPosition, null, handler)
+    }
+  }
 
   // Provides the syntax `Async { k => ... }` for asyncronous IO blocks.
   def Async[A](cb: (A => Unit) => Unit): IO[A] =
