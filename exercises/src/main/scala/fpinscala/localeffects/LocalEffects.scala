@@ -2,6 +2,8 @@ package fpinscala.localeffects
 
 import fpinscala.monads._
 
+import scala.collection.mutable
+
 object Mutable {
   def quicksort(xs: List[Int]): List[Int] = if (xs.isEmpty) xs else {
     val arr = xs.toArray
@@ -98,7 +100,10 @@ sealed abstract class STArray[S,A](implicit manifest: Manifest[A]) {
   // Turn the array into an immutable list
   def freeze: ST[S,List[A]] = ST(value.toList)
 
-  def fill(xs: Map[Int,A]): ST[S,Unit] = ???
+  // Exercise 1 (with help)
+  def fill(xs: Map[Int,A]): ST[S,Unit] =
+    xs.foldRight(ST[S, Unit](())){ case ((k, v), st) =>
+      st flatMap (_ => write(k, v)) }
 
   def swap(i: Int, j: Int): ST[S,Unit] = for {
     x <- read(i)
@@ -124,9 +129,35 @@ object STArray {
 object Immutable {
   def noop[S] = ST[S,Unit](())
 
-  def partition[S](a: STArray[S,Int], l: Int, r: Int, pivot: Int): ST[S,Int] = ???
+  // Exercise 2 (with help)
+  def partition[S](a: STArray[S,Int], l: Int, r: Int, pivot: Int): ST[S,Int] =
+    for {
+      vp <- a.read(pivot)
+      _ <- a.swap(pivot, r)
+      j <- STRef(l)
+      _ <- (l until r).foldLeft(noop[S])((st, i) => for {
+        vi <- a.read(i)
+        _  <- if (vi < vp)
+                for {
+                  vj <- j.read
+                  _ <- a.swap(i, vj)
+                  j <- STRef(vj + 1)
+                } yield ()
+              else noop
+      } yield ())
+      vj <- j.read
+      _ <- a.swap(vj, r)
+  } yield vj
 
-  def qs[S](a: STArray[S,Int], l: Int, r: Int): ST[S, Unit] = ???
+  def qs[S](a: STArray[S,Int], l: Int, r: Int): ST[S, Unit] =
+    if (l < r)
+      for {
+        pi <- partition(a, l, r, l + (r - l) / 2)
+        _  <- qs(a, l, pi - 1)
+        _  <- qs(a, pi + 1, r)
+      } yield ()
+    else
+      noop
 
   def quicksort(xs: List[Int]): List[Int] =
     if (xs.isEmpty) xs else ST.runST(new RunnableST[List[Int]] {
@@ -140,4 +171,32 @@ object Immutable {
 }
 
 import scala.collection.mutable.HashMap
+
+// Exercise 3
+sealed abstract class STMap[S, K, V] {
+  protected def value: mutable.HashMap[K, V]
+
+  def size: ST[S, Int] = ST(value.size)
+
+  def write(k: K, v: V): ST[S, Unit] = new ST[S, Unit] {
+    def run(s: S): (Unit, S) = {
+      value(k) = v
+      ((), s)
+    }
+  }
+
+  def read(k: K): ST[S, V] = ST(value(k))
+
+  def freeze: ST[S, Map[K, V]] = ST(value.toMap)
+
+}
+
+object STMap {
+  def empty[S, K, V]() = ST[S, STMap[S,K,V]] = ST(new STMap[S,K,V] {
+    val value = mutable.HashMap.empty[K,V]
+  })
+
+  def fromMap[S,K,V](m: Map[K,V]): ST[S, STMap[S,K,V]] = ST(new STMap[S,K,V] {
+    val value = (mutable.HashMap.newBuilder[K,V] ++= m).result
+}
 
