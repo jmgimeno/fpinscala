@@ -135,16 +135,17 @@ object Immutable {
       vp <- a.read(pivot)
       _ <- a.swap(pivot, r)
       j <- STRef(l)
-      _ <- (l until r).foldLeft(noop[S])((st, i) => for {
-        vi <- a.read(i)
-        _  <- if (vi < vp)
-                for {
-                  vj <- j.read
-                  _ <- a.swap(i, vj)
-                  j <- STRef(vj + 1)
-                } yield ()
-              else noop[S]
-      } yield ())
+      _ <- ST {
+        (l until r).foreach(i => for {
+          vi <- a.read(i)
+          _  <- if (vi < vp)
+                  for {
+                    vj <- j.read
+                    _ <- a.swap(i, vj)
+                    j <- STRef(vj + 1)
+                  } yield ()
+                else noop[S]
+        } yield ()) }
       vj <- j.read
       _ <- a.swap(vj, r)
   } yield vj
