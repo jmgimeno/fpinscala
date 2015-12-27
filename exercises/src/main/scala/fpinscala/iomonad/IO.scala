@@ -626,7 +626,7 @@ object IO3 {
         def completed(result: Integer, attachment: Object): Unit = {
           val array = new Array[Byte](result)
           buf.slice.get(array, 0, result)
-          cb(Right(array)
+          cb(Right(array))
         }
         def failed(exc: Throwable, attachment: Object): Unit =
           cb(Left(exc))

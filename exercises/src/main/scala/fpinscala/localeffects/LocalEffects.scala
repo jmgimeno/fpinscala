@@ -143,7 +143,7 @@ object Immutable {
                   _ <- a.swap(i, vj)
                   j <- STRef(vj + 1)
                 } yield ()
-              else noop
+              else noop[S]
       } yield ())
       vj <- j.read
       _ <- a.swap(vj, r)
@@ -157,7 +157,7 @@ object Immutable {
         _  <- qs(a, pi + 1, r)
       } yield ()
     else
-      noop
+      noop[S]
 
   def quicksort(xs: List[Int]): List[Int] =
     if (xs.isEmpty) xs else ST.runST(new RunnableST[List[Int]] {
@@ -192,11 +192,12 @@ sealed abstract class STMap[S, K, V] {
 }
 
 object STMap {
-  def empty[S, K, V]() = ST[S, STMap[S,K,V]] = ST(new STMap[S,K,V] {
+  def empty[S, K, V](): ST[S, STMap[S,K,V]] = ST(new STMap[S,K,V] {
     val value = mutable.HashMap.empty[K,V]
   })
 
   def fromMap[S,K,V](m: Map[K,V]): ST[S, STMap[S,K,V]] = ST(new STMap[S,K,V] {
     val value = (mutable.HashMap.newBuilder[K,V] ++= m).result
+  })
 }
 
