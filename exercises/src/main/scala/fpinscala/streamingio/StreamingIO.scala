@@ -207,7 +207,16 @@ object SimpleStreamTransducers {
     /*
      * Exercise 6: Implement `zipWithIndex`.
      */
-    def zipWithIndex: Process[I,(O,Int)] = ???
+    def zipWithIndex: Process[I,(O,Int)] = {
+      def go(n: Int, p: Process[I,O]): Process[I,(O,Int)] = p match {
+        case Halt() => Halt()
+        case Emit(h, t) => Emit((h, n), go(n+1, t))
+        case Await(recv) => Await { i => go(n, recv(i)) }
+      }
+      go(0, this)
+    }
+
+
 
     /* Add `p` to the fallback branch of this process */
     def orElse(p: Process[I,O]): Process[I,O] = this match {
@@ -370,6 +379,17 @@ object SimpleStreamTransducers {
      * `count`?
      */
 
+    def zipWith[A, B, C, D](p1: Process[A, B],
+                            p2: Process[A, C])
+                           (f: (B, C) => D): Process[A, D] = (p1, p2) match {
+      case (Halt(), _) => Halt()
+      case (_, Halt()) => Halt()
+      case (Emit(h1, t1), Emit(h2, t2)) => Emit(f(h1, h2), zipWith(t1, t2)(f))
+      case (Emit(h1, t1), Await(recv2)) => Await(i => zipWith(p1, recv2(i))(f))
+      case (Await(recv1), Emit(h2, t2)) => Await(i => zipWith(recv1(i), p2)(f))
+      case (Await(recv1), Await(recv2)) => Await(i => zipWith(recv1(i), recv2(i))(f))
+    }
+
     def feed[A,B](oa: Option[A])(p: Process[A,B]): Process[A,B] =
       p match {
         case Halt() => p
@@ -389,7 +409,33 @@ object SimpleStreamTransducers {
      * We choose to emit all intermediate values, and not halt.
      * See `existsResult` below for a trimmed version.
      */
-    def exists[I](f: I => Boolean): Process[I,Boolean] = ???
+    def exists_mine[I](f: I => Boolean): Process[I,Boolean] = {
+      def go(e: Boolean): Process[I, Boolean] =
+        await(i => emit(e || f(i), go(e || f(i))))
+      go(false)
+    }
+
+    def exists[I](f: I => Boolean): Process[I,Boolean] =
+      lift(f) |> any
+
+    // This was absent in the original file
+
+    /* Emits whether a `true` input has ever been received. */
+    def any: Process[Boolean,Boolean] =
+      loop(false)((b:Boolean,s) => (s || b, s || b))
+
+    /* A trimmed `exists`, containing just the final result. */
+    def existsResult[I](f: I => Boolean) =
+      exists(f) |> takeThrough(!_) |> dropWhile(!_) |> echo.orElse(emit(false))
+
+    /*
+     * Like `takeWhile`, but includes the first element that tests
+     * false.
+     */
+    def takeThrough[I](f: I => Boolean): Process[I,I] =
+      takeWhile(f) ++ echo
+
+    // ------------------------------------------------
 
     /* Awaits then emits a single value, then halts. */
     def echo[I]: Process[I,I] = await(i => emit(i))
