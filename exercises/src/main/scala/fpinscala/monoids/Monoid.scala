@@ -1,6 +1,5 @@
 package fpinscala.monoids
 
-import com.sun.xml.internal.xsom.impl.parser.state.identityConstraint
 import fpinscala.parallelism.Nonblocking._
 import fpinscala.parallelism.Nonblocking.Par.toParOps // infix syntax for `Par.map`, `Par.flatMap`, etc
 import language.higherKinds
