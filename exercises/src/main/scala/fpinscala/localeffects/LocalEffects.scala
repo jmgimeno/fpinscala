@@ -135,20 +135,18 @@ object Immutable {
       vp <- a.read(pivot)
       _ <- a.swap(pivot, r)
       j <- STRef(l)
-      _ <- ST {
-        (l until r).foreach(i => for {
-          vi <- a.read(i)
-          _  <- if (vi < vp)
-                  for {
-                    vj <- j.read
-                    _ <- a.swap(i, vj)
-                    j <- STRef(vj + 1)
-                  } yield ()
-                else noop[S]
-        } yield ()) }
-      vj <- j.read
-      _ <- a.swap(vj, r)
-  } yield vj
+      _ <- (l until r).foldLeft(noop[S])((s, i) => for {
+        _ <- s
+        vi <- a.read(i)
+        _  <- if (vi < vp) (for {
+          vj <- j.read
+          _  <- a.swap(i, vj)
+          _  <- j.write(vj + 1)
+        } yield ()) else noop[S]
+      } yield ())
+      x <- j.read
+      _ <- a.swap(x, r)
+    } yield x
 
   def qs[S](a: STArray[S,Int], l: Int, r: Int): ST[S, Unit] =
     if (l < r)
@@ -168,6 +166,22 @@ object Immutable {
         _      <- qs(arr, 0, size - 1)
         sorted <- arr.freeze
       } yield sorted
+  })
+
+  def runTest(): Int = ST.runST(new RunnableST[Int] {
+    override def apply[S]: ST[S, Int] = for {
+      _ <- noop[S]
+      j <- STRef(0)
+      _ <- (0 to 5).foldLeft(noop[S])((s, i) => for {
+        _ <- s // <--------------------------------------------!!!!!!!!!!!
+        _ <- noop[S]
+        _ <- (for {
+          vj <- j.read
+          _  <- { println(s"j=$vj"); j.write(vj + 1) }
+        } yield ())
+      } yield ())
+      x <- j.read
+    } yield x
   })
 }
 

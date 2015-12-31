@@ -1,4 +1,4 @@
-import fpinscala.localeffects.Mutable._
+import fpinscala.localeffects.Immutable._
 
 
 quicksort(List())
