@@ -15,6 +15,18 @@ object MyProgram:
   @main def printAbs: Unit =
     println(formatAbs(-42))
 
+  def fact(n: Int): Int =
+    if (n == 0) 1
+    else n * fact(n-1)
+
+  /*
+    fact(4) = 4 * fact(3)
+            = 4 * 3 * fact(2)
+            = 4 * 3 * 2 * fact(1)
+              ^^^^^^^^^
+              STACK !!!
+  */
+
   // A definition of factorial, using a local, tail recursive function
   def factorial(n: Int): Int =
     @annotation.tailrec
@@ -24,6 +36,15 @@ object MyProgram:
 
     go(n, 1)
 
+  /*
+    go(4, 1)
+  = go(3, 4)
+  = go(2, 12)
+  = go(1, 24)
+  = go(0, 24)
+  => 24    DON'T NEED A STACK !!!!
+  */
+
   // Another implementation of `factorial`, this time with a `while` loop
   def factorial2(n: Int): Int =
     var acc = 1
@@ -32,8 +53,27 @@ object MyProgram:
     acc
 
   // Exercise 1: Write a function to compute the nth fibonacci number
+  def fib2(n: Int): Int =
+    if (n <= 1) n
+    else fib2(n-2) + fib2(n-1)
 
-  def fib(n: Int): Int = ???
+  def fib(n: Int): Int =
+    @annotation.tailrec
+    def go(n: Int, f_2: Int, f_1: Int): Int =
+      if (n <= 0) f_2
+      else if (n == 1) f_1
+      else go(n-1, f_1, f_2 + f_1)
+
+    go(n, 0, 1)
+
+  /*
+   0   1   1   2   3  5   8 ....
+  f-2 f-1
+      f-2 f-1
+          f-2 f-1
+              ...
+  go(5, 0, 1) = go(4, 1, 1) = go(3, 1, 2) = go(2, 2, 3) = go(1, 3, 5) = 5
+  */
 
   // This definition and `formatAbs` are very similar..
   private def formatFactorial(n: Int) =
@@ -55,6 +95,7 @@ object FormatAbsAndFactorial:
   @main def printAbsAndFactorial: Unit =
     println(formatResult("absolute value", -42, abs))
     println(formatResult("factorial", 7, factorial))
+    println(formatResult("fibonacci", 7, fib))
 
 object TestFib:
 
@@ -90,8 +131,8 @@ object MonomorphicBinarySearch:
   def findFirst(ss: Array[String], key: String): Int =
     @annotation.tailrec
     def loop(n: Int): Int =
-      // If `n` is past the end of the array, return `-1`
-      // indicating the key doesn't exist in the array.
+    // If `n` is past the end of the array, return `-1`
+    // indicating the key doesn't exist in the array.
       if n >= ss.length then -1
       // `ss(n)` extracts the n'th element of the array `ss`.
       // If the element at `n` is equal to the key, return `n`
