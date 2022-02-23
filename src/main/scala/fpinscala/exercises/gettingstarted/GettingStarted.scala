@@ -17,6 +17,8 @@ object MyProgram:
     println(formatAbs(-42))
 
   def fact(n: Int): Int =
+    // Prec: n >= 0
+    // Post: returns n!
     if (n == 0) 1
     else n * fact(n - 1)
 
@@ -30,10 +32,14 @@ object MyProgram:
 
   // A definition of factorial, using a local, tail recursive function
   def factorial(n: Int): Int =
+    // Prec: n >= 0
+    // Post: returns n!
     @annotation.tailrec
-    def go(n: Int, acc: Int): Int =
-      if n <= 0 then acc
-      else go(n - 1, n * acc)
+    def go(k: Int, acc: Int): Int =
+      // Prec: k >= 0 AND acc * k! = n!
+      // Post: returns n!
+      if k == 0 then acc
+      else go(k - 1, k * acc)
 
     go(n, 1)
 
@@ -48,10 +54,14 @@ object MyProgram:
 
   // Another implementation of `factorial`, this time with a `while` loop
   def factorial2(n: Int): Int =
+    // Prec: n >= 0
+    // Post: returns n!
     var acc = 1
     var i = n
     while (i > 0) {
-      acc *= i; i -= 1
+      // Inv: i >= 0 AND acc * i! = n!
+      acc *= i;
+      i -= 1
     }
     acc
 
@@ -59,36 +69,51 @@ object MyProgram:
 
   // Multiple recursion
   def fib2(n: Int): Int =
+    // Prec: n >= 0
+    // Post: returns F[n]
     if (n <= 1) n
     else fib2(n - 2) + fib2(n - 1)
 
   // Simple recursion
   def fib3(n: Int): Int =
-    def aux(n: Int): (Int, Int) =
-    // returns (fib n, fib (n+1))
-      if (n <= 0) (0, 1)
+    // Prec: n >= 0
+    // Post: returns F[n]
+    def aux(k: Int): (Int, Int) =
+      // Prec: k >= 0
+      // Post: returns (F[k], F[k+1])
+      if (k == 0) (0, 1)
       else
-        val (f_n_1, f_n) = aux(n - 1)
-        (f_n, f_n_1 + f_n)
+        val (f_kMinus1, f_k) = aux(k - 1)
+        val f_kPlus1 = f_kMinus1 + f_k
+        (f_k, f_kPlus1)
 
     aux(n)._1
 
   // Tail recursion
   def fib4(n: Int): Int =
+    // Prec: n >= 0
+    // Post: returns F[n]
     @annotation.tailrec
-    def go(n: Int, acc: (Int, Int)): (Int, Int) =
-      if (n <= 0) acc
+    def go(k: Int, acc: (Int, Int)): (Int, Int) =
+      // Prec: k >= 0 AND acc = (F[n-k], F[n-k+1])
+      // Post: returns (F[n], F[n+1])
+      if (k == 0) acc
       else
-        val (f_2, f_1) = acc
-        go(n - 1, (f_1, f_2 + f_1))
+        val (f_nMinusK, f_nMinusKPlus1) = acc
+        val f_nMinusKPlus2 = f_nMinusK + f_nMinusKPlus1
+        go(k - 1, (f_nMinusKPlus1, f_nMinusKPlus2))
 
     go(n, (0, 1))._1
 
   def fib(n: Int): Int =
+    // Prec: n >= 0
+    // Post: returns F[n]
     @annotation.tailrec
-    def go(n: Int, f_2: Int, f_1: Int): Int =
-      if (n <= 0) f_2
-      else go(n - 1, f_1, f_2 + f_1)
+    def go(k: Int, f_nMinusK: Int, f_nMinusKPlus1: Int): Int =
+      // Prec: k >= 0 AND f_nMinusK = F[n-k] AND f_nMinusKPlus1 = F[n-k+1]
+      // Post: returns F[n] 
+      if (k == 0) f_nMinusK
+      else go(k - 1, f_nMinusKPlus1, f_nMinusK + f_nMinusKPlus1)
 
     go(n, 0, 1)
 
@@ -148,7 +173,8 @@ object AnonymousFunctions:
     println(formatResult("increment3", 7, x => x + 1))
     println(formatResult("increment4", 7, _ + 1))
     println(formatResult("increment5", 7, x => {
-      val r = x + 1; r
+      val r = x + 1;
+      r
     }))
 
 object MonomorphicBinarySearch:
