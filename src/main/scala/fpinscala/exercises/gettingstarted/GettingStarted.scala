@@ -105,6 +105,16 @@ object MyProgram:
 
     go(n, (0, 1))._1
 
+  // Using iterators
+  def fib5(n: Int): Int =
+    // Prec: n >= 0
+    // Post: returns F[n]
+    Iterator
+      .iterate((0, 1))((a, b) => (b, a + b))
+      .drop(n)
+      .next()
+      ._1
+
   def fib(n: Int): Int =
     // Prec: n >= 0
     // Post: returns F[n]
