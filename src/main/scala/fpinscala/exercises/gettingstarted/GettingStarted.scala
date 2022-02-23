@@ -2,6 +2,7 @@ package fpinscala.exercises.gettingstarted
 
 // A comment!
 /* Another comment */
+
 /** A documentation comment */
 object MyProgram:
   def abs(n: Int): Int =
@@ -17,7 +18,7 @@ object MyProgram:
 
   def fact(n: Int): Int =
     if (n == 0) 1
-    else n * fact(n-1)
+    else n * fact(n - 1)
 
   /*
     fact(4) = 4 * fact(3)
@@ -32,7 +33,7 @@ object MyProgram:
     @annotation.tailrec
     def go(n: Int, acc: Int): Int =
       if n <= 0 then acc
-      else go(n-1, n*acc)
+      else go(n - 1, n * acc)
 
     go(n, 1)
 
@@ -49,20 +50,45 @@ object MyProgram:
   def factorial2(n: Int): Int =
     var acc = 1
     var i = n
-    while (i > 0) { acc *= i; i -= 1 }
+    while (i > 0) {
+      acc *= i; i -= 1
+    }
     acc
 
   // Exercise 1: Write a function to compute the nth fibonacci number
+
+  // Multiple recursion
   def fib2(n: Int): Int =
     if (n <= 1) n
-    else fib2(n-2) + fib2(n-1)
+    else fib2(n - 2) + fib2(n - 1)
+
+  // Simple recursion
+  def fib3(n: Int): Int =
+    def aux(n: Int): (Int, Int) =
+    // returns (fib n, fib (n+1))
+      if (n <= 0) (0, 1)
+      else
+        val (f_n_1, f_n) = aux(n - 1)
+        (f_n, f_n_1 + f_n)
+
+    aux(n)._1
+
+  // Tail recursion
+  def fib4(n: Int): Int =
+    @annotation.tailrec
+    def go(n: Int, acc: (Int, Int)): (Int, Int) =
+      if (n <= 0) acc
+      else
+        val (f_2, f_1) = acc
+        go(n - 1, (f_1, f_2 + f_1))
+
+    go(n, (0, 1))._1
 
   def fib(n: Int): Int =
     @annotation.tailrec
     def go(n: Int, f_2: Int, f_1: Int): Int =
       if (n <= 0) f_2
-      else if (n == 1) f_1
-      else go(n-1, f_1, f_2 + f_1)
+      else go(n - 1, f_1, f_2 + f_1)
 
     go(n, 0, 1)
 
@@ -121,7 +147,9 @@ object AnonymousFunctions:
     println(formatResult("increment2", 7, (x) => x + 1))
     println(formatResult("increment3", 7, x => x + 1))
     println(formatResult("increment4", 7, _ + 1))
-    println(formatResult("increment5", 7, x => { val r = x + 1; r }))
+    println(formatResult("increment5", 7, x => {
+      val r = x + 1; r
+    }))
 
 object MonomorphicBinarySearch:
 
@@ -162,25 +190,25 @@ object PolymorphicFunctions:
 
   // Exercise 2: Implement a polymorphic function to check whether
   // an `Array[A]` is sorted
-  def isSorted[A](as: Array[A], gt: (A,A) => Boolean): Boolean = ???
+  def isSorted[A](as: Array[A], gt: (A, A) => Boolean): Boolean = ???
 
   // Polymorphic functions are often so constrained by their type
   // that they only have one implementation! Here's an example:
 
-  def partial1[A,B,C](a: A, f: (A,B) => C): B => C =
+  def partial1[A, B, C](a: A, f: (A, B) => C): B => C =
     (b: B) => f(a, b)
 
   // Exercise 3: Implement `curry`.
 
   // Note that `=>` associates to the right, so we could
   // write the return type as `A => B => C`
-  def curry[A,B,C](f: (A, B) => C): A => (B => C) =
+  def curry[A, B, C](f: (A, B) => C): A => (B => C) =
     ???
 
   // NB: The `Function2` trait has a `curried` method already
 
   // Exercise 4: Implement `uncurry`
-  def uncurry[A,B,C](f: A => B => C): (A, B) => C =
+  def uncurry[A, B, C](f: A => B => C): (A, B) => C =
     ???
 
   /*
@@ -195,6 +223,6 @@ object PolymorphicFunctions:
 
   // Exercise 5: Implement `compose`
 
-  def compose[A,B,C](f: B => C, g: A => B): A => C =
+  def compose[A, B, C](f: B => C, g: A => B): A => C =
     ???
 
