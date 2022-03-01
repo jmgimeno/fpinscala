@@ -44,7 +44,7 @@ object List: // `List` companion object. Contains functions for creating and wor
   def sumViaFoldRight(ns: List[Int]): Int =
     foldRight(ns, 0, (x,y) => x + y)
 
-  def productViaFoldRight(ns: List[Double]): Int =
+  def productViaFoldRight(ns: List[Double]): Double =
     foldRight(ns, 1.0, _ * _) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
 
   def tail[A](l: List[A]): List[A] =
