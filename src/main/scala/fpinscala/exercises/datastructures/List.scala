@@ -31,6 +31,7 @@ object List: // `List` companion object. Contains functions for creating and wor
     case Cons(h, t) => h + sum(t)
     case _ => 101
 
+  // NOTE: The cost of append is linear on the length of a1. The length of a2 is irrelevant !!!
   def append[A](a1: List[A], a2: List[A]): List[A] =
     a1 match
       case Nil => a2
@@ -77,23 +78,66 @@ object List: // `List` companion object. Contains functions for creating and wor
       case Cons(_, Nil) => Nil
       case Cons(h, t) => Cons(h, init(t))
 
-  // ---
+  // def foldRight[A,B](l: List[A], acc: B, f: (A, B) => B): B
+  // foldRight substitutes Cons <-> f and Nil <-> acc
+  // Cons(90, Cons(56, Cons(23, Nil)))
+  //  f  (90,  f  (56, f (23, acc))))
+  //        (1+      (1+      (1 +     0)))
+  def length[A](l: List[A]): Int =
+    foldRight(l, 0, (_, acc) => acc + 1)
 
-  def length[A](l: List[A]): Int = ???
+  // List(x1, x2, x3)
+  // Cons(x1, Cons(x2, Cons(x3, Nil)))
+  //      x   -----------------------
+  //                  xs
+  // If we call foldLeft with xs we need to pass f(acc, x) as the next value of the accumulator
+  // fl:   f(f(f(acc, x1), x2), x3)
+  //       f(f(      acc', x2), x3)
+  @annotation.tailrec
+  def foldLeft[A,B](l: List[A], acc: B, f: (B, A) => B): B =
+    l match {
+      case Nil => acc
+      case Cons(x, xs) => foldLeft(xs, f(acc, x), f)
+    }
 
-  def foldLeft[A,B](l: List[A], acc: B, f: (B, A) => B): B = ???
+  def sumViaFoldLeft(ns: List[Int]): Int =
+    foldLeft(ns, 0, _ + _)
 
-  def sumViaFoldLeft(ns: List[Int]) = ???
+  def productViaFoldLeft(ns: List[Double]): Double =
+    foldLeft(ns, 1.0, _ * _)
 
-  def productViaFoldLeft(ns: List[Double]) = ???
+  def lengthViaFoldLeft[A](l: List[A]): Int =
+    foldLeft(l, 0, (acc, _) => acc + 1)
 
-  def lengthViaFoldLeft[A](l: List[A]): Int = ???
+  // (acc, x) => new acc
+  // x1, x2, x3 -> x3, x2, x1
+  // The first element of the list will be the last element of the reversed list
+  def reverse[A](l: List[A]): List[A] =
+    foldLeft[A, List[A]](l, Nil, (acc, x) => Cons(x, acc))
+  //         ^^^^^^^^^^ needed to help the compiler to check type
+  // Alternative: foldLeft(l, Nil:List[A], (acc, x) => Cons(x, acc))
 
-  def reverse[A](l: List[A]): List[A] = ???
+  // foldRight substitutes Cons <-> Cons, and Nil <-> r
+  // Cons(x1, Cons(x2,                                ))
+  //                   Cons(y1, Cons(y2, Cons(y3, Nil)))
+  def appendViaFoldRight[A](l: List[A], r: List[A]): List[A] =
+    foldRight(l, r, Cons)
 
-  def appendViaFoldRight[A](l: List[A], r: List[A]): List[A] = ???
+  // List(List(1, 2), List(2, 3, 4), List(5, 6, 7))
+  // append(List(1, 2), append(List(2, 3, 4), append(List(5, 6, 7), Nil))
+  // NOTE: we cam do the same with foldLeft but now the cost is quadratic instead of linear
+  // append(append(append(Nil, List(1, 2)), List(2, 3, 4)), List(5, 6, 7))
+  def concat[A](l: List[List[A]]): List[A] =
+    foldRight(l, Nil:List[A], append)
 
-  def concat[A](l: List[List[A]]): List[A] = ???
+  // Cons(x1, Cons(x2, Cons(x3, Nil)))
+  //   f (x1,   f (x2,    f(x3, acc))) <- foldRight on list
+  //   g(g(g(acc, x1), x2), x3) <- foldLeft on list
+  //   g(g(g(acc, x3), x2), x1) <- foldLeft on reversed list
+  // If we reverse the list, going left to right is "the same" as goint right to left on the
+  // original list
+  def foldRightViaFoldLeft[A,B](l: List[A], acc:B, f: (A, B) => B): B =
+    foldLeft(reverse(l), acc, (acc, x) => f(x, acc))
 
   def incrementEach(l: List[Int]): List[Int] = ???
 
