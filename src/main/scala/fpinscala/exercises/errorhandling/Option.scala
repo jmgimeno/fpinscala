@@ -26,7 +26,18 @@ enum Option[+A]:
     case None => ob
     case oa => oa  // as Option is covariant and B>:A then Option[B]>:Option[A] so we can return oa
 
-  def filter(f: A => Boolean): Option[A] = ???
+  def orElse2[B>:A](ob: => Option[B]): Option[B] =
+    this.map(Some).getOrElse(ob)
+
+  def filter(f: A => Boolean): Option[A] = this match
+    case oa @ Some(a) if f(a) => oa
+    case _ => None
+
+  def filter2(f: A => Boolean): Option[A] =
+    flatMap(a => if f(a) then Some(a) else None)
+
+  def filter3(f: A => Boolean): Option[A] =
+    map(a => if f(a) then Some(a) else None).getOrElse(None)
 
 object Option:
 
@@ -47,7 +58,19 @@ object Option:
     if xs.isEmpty then None
     else Some(xs.sum / xs.length)
 
-  def variance(xs: Seq[Double]): Option[Double] = ???
+  def variance(xs: Seq[Double]): Option[Double] =
+    mean(xs).flatMap(mu => mean(xs.map(x => (x - mu) * (x - mu))))
+
+  def variance2(xs: Seq[Double]): Option[Double] =
+    mean(xs.map(x => x * x))
+      .flatMap(mux2 => mean(xs).map(mu => mux2 - mu * mu))
+
+  // for-expressions will be presented later in the course
+  // but this is an interesting use-case for them
+  def variance3(xs: Seq[Double]): Option[Double] = for {
+      mux2 <- mean(xs.map(x => x * x))
+      mu <- mean(xs)
+    } yield mux2 - mu * mu
 
   def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = ???
 
