@@ -29,6 +29,9 @@ enum Option[+A]:
   def orElse2[B>:A](ob: => Option[B]): Option[B] =
     this.map(Some).getOrElse(ob)
 
+  // oa is a variable that is bound to the Some(a) value
+  // and we can use it in the right-hand side to refer to
+  // the whole expression and not create a new value
   def filter(f: A => Boolean): Option[A] = this match
     case oa @ Some(a) if f(a) => oa
     case _ => None
