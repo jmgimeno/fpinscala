@@ -1,6 +1,7 @@
 package fpinscala.exercises.errorhandling
 
 // Hide std library `Option` since we are writing our own in this chapter
+
 import scala.{Option as _, Some as _, None as _}
 
 enum Option[+A]:
@@ -11,7 +12,7 @@ enum Option[+A]:
     case None => None
     case Some(a) => Some(f(a))
 
-  def getOrElse[B>:A](default: => B): B = this match
+  def getOrElse[B >: A](default: => B): B = this match
     case None => default
     case Some(a) => a
 
@@ -22,18 +23,18 @@ enum Option[+A]:
   def flatMap2[B](f: A => Option[B]): Option[B] =
     map(f).getOrElse(None)
 
-  def orElse[B>:A](ob: => Option[B]): Option[B] = this match
+  def orElse[B >: A](ob: => Option[B]): Option[B] = this match
     case None => ob
-    case oa => oa  // as Option is covariant and B>:A then Option[B]>:Option[A] so we can return oa
+    case oa => oa // as Option is covariant and B>:A then Option[B]>:Option[A] so we can return oa
 
-  def orElse2[B>:A](ob: => Option[B]): Option[B] =
+  def orElse2[B >: A](ob: => Option[B]): Option[B] =
     this.map(Some).getOrElse(ob)
 
   // oa is a variable that is bound to the Some(a) value
   // and we can use it in the right-hand side to refer to
   // the whole expression and not create a new value
   def filter(f: A => Boolean): Option[A] = this match
-    case oa @ Some(a) if f(a) => oa
+    case oa@Some(a) if f(a) => oa
     case _ => None
 
   def filter2(f: A => Boolean): Option[A] =
@@ -64,19 +65,37 @@ object Option:
   def variance(xs: Seq[Double]): Option[Double] =
     mean(xs).flatMap(mu => mean(xs.map(x => (x - mu) * (x - mu))))
 
-  def variance2(xs: Seq[Double]): Option[Double] =
+  def variance_2(xs: Seq[Double]): Option[Double] =
     mean(xs.map(x => x * x))
       .flatMap(mux2 => mean(xs).map(mu => mux2 - mu * mu))
 
   // for-expressions will be presented later in the course
   // but this is an interesting use-case for them
-  def variance3(xs: Seq[Double]): Option[Double] = for {
-      mux2 <- mean(xs.map(x => x * x))
-      mu <- mean(xs)
-    } yield mux2 - mu * mu
+  def variance_3(xs: Seq[Double]): Option[Double] = for {
+    mux2 <- mean(xs.map(x => x * x))
+    mu <- mean(xs)
+  } yield mux2 - mu * mu
 
-  def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = ???
+  def map2[A, B, C](oa: Option[A], ob: Option[B])(f: (A, B) => C): Option[C] =
+    (oa, ob) match
+      case (Some(a), Some(b)) => Some(f(a, b))
+      case _ => None
 
-  def sequence[A](as: List[Option[A]]): Option[List[A]] = ???
+  def sequence[A](as: List[Option[A]]): Option[List[A]] =
+    as match
+      case Nil => Some(Nil)
+      case h :: t => map2(h, sequence(t))(_ :: _)
 
-  def traverse[A, B](as: List[A])(f: A => Option[B]): Option[List[B]] = ???
+  // sequence follows the foldRight pattern
+  def sequence_2[A](as: List[Option[A]]): Option[List[A]] =
+    as.foldRight(Some(Nil):Option[List[A]])((h, acc) => map2(h, acc)(_ :: _))
+
+  // if we compare the solutions of sequence_2 and traverse we see that the
+  // only difference is the h <-> f(h) and we want them to be equal, so the
+  // funcion f to use is h => h (a.k.a. identity)
+  def sequence2[A](as: List[Option[A]]): Option[List[A]] =
+    traverse(as)(h => h)
+
+  def traverse[A, B](as: List[A])(f: A => Option[B]): Option[List[B]] =
+    as.foldRight(Some(Nil):Option[List[B]])((h, acc) => map2(f(h), acc)(_ :: _))
+
