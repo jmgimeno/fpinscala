@@ -76,10 +76,17 @@ object Option:
     mu <- mean(xs)
   } yield mux2 - mu * mu
 
-  def map2[A, B, C](oa: Option[A], ob: Option[B])(f: (A, B) => C): Option[C] =
+  def map2_2[A, B, C](oa: Option[A], ob: Option[B])(f: (A, B) => C): Option[C] =
     (oa, ob) match
       case (Some(a), Some(b)) => Some(f(a, b))
       case _ => None
+
+  def map2[A, B, C](oa: Option[A], ob: Option[B])(f: (A, B) => C): Option[C] =
+    oa.flatMap(a => ob.map(b => f(a, b)))
+
+  // It's exactly the same function as map2 (scala rewrites one into the other)
+  def map2_3[A, B, C](oa: Option[A], ob: Option[B])(f: (A, B) => C): Option[C] =
+    for { a <- oa; b <- ob } yield f(a, b)
 
   def sequence_2[A](as: List[Option[A]]): Option[List[A]] =
     as match
