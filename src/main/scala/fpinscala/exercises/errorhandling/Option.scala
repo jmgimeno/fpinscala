@@ -81,21 +81,37 @@ object Option:
       case (Some(a), Some(b)) => Some(f(a, b))
       case _ => None
 
-  def sequence[A](as: List[Option[A]]): Option[List[A]] =
+  def sequence_2[A](as: List[Option[A]]): Option[List[A]] =
     as match
       case Nil => Some(Nil)
-      case h :: t => map2(h, sequence(t))(_ :: _)
+      case h :: t => map2(h, sequence_2(t))(_ :: _)
 
   // sequence follows the foldRight pattern
-  def sequence_2[A](as: List[Option[A]]): Option[List[A]] =
-    as.foldRight(Some(Nil):Option[List[A]])((h, acc) => map2(h, acc)(_ :: _))
+  def sequence[A](as: List[Option[A]]): Option[List[A]] =
+    as.foldRight(Some(Nil):Option[List[A]])((a, acc) => map2(a, acc)(_ :: _))
 
-  // if we compare the solutions of sequence_2 and traverse we see that the
-  // only difference is the h <-> f(h) and we want them to be equal, so the
-  // funcion f to use is h => h (a.k.a. identity)
-  def sequence2[A](as: List[Option[A]]): Option[List[A]] =
-    traverse(as)(h => h)
+  def sequence_4[A](as: List[Option[A]]): Option[List[A]] =
+    as match
+      case Nil => Some(Nil)
+      case h :: t =>
+        for
+          a <- h
+          as <- sequence_4(t)
+        yield a :: as
+
+  def sequence_5[A](as: List[Option[A]]): Option[List[A]] =
+    as.foldRight(Some(Nil):Option[List[A]]) {
+      (h, acc) => for {
+        a <- h
+        as <- acc
+      } yield a :: as
+    }
 
   def traverse[A, B](as: List[A])(f: A => Option[B]): Option[List[B]] =
     as.foldRight(Some(Nil):Option[List[B]])((h, acc) => map2(f(h), acc)(_ :: _))
 
+  // if we compare the solutions of sequence_2 and traverse we see that the
+  // only difference is the h <-> f(h) and we want them to be equal, so the
+  // funcion f to use is h => h (a.k.a. identity)
+  def sequence_3[A](as: List[Option[A]]): Option[List[A]] =
+    traverse(as)(h => h)
