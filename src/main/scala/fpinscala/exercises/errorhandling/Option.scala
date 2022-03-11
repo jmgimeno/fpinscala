@@ -16,31 +16,31 @@ enum Option[+A]:
     case None => default
     case Some(a) => a
 
-  def flatMap[B](f: A => Option[B]): Option[B] = this match
+  def flatMap_2[B](f: A => Option[B]): Option[B] = this match
     case None => None
     case Some(a) => f(a)
 
-  def flatMap2[B](f: A => Option[B]): Option[B] =
+  def flatMap[B](f: A => Option[B]): Option[B] =
     map(f).getOrElse(None)
 
-  def orElse[B >: A](ob: => Option[B]): Option[B] = this match
+  def orElse_2[B >: A](ob: => Option[B]): Option[B] = this match
     case None => ob
     case oa => oa // as Option is covariant and B>:A then Option[B]>:Option[A] so we can return oa
 
-  def orElse2[B >: A](ob: => Option[B]): Option[B] =
+  def orElse[B >: A](ob: => Option[B]): Option[B] =
     this.map(Some).getOrElse(ob)
 
   // oa is a variable that is bound to the Some(a) value
   // and we can use it in the right-hand side to refer to
   // the whole expression and not create a new value
-  def filter(f: A => Boolean): Option[A] = this match
+  def filter_2(f: A => Boolean): Option[A] = this match
     case oa@Some(a) if f(a) => oa
     case _ => None
 
-  def filter2(f: A => Boolean): Option[A] =
+  def filter(f: A => Boolean): Option[A] =
     flatMap(a => if f(a) then Some(a) else None)
 
-  def filter3(f: A => Boolean): Option[A] =
+  def filter_3(f: A => Boolean): Option[A] =
     map(a => if f(a) then Some(a) else None).getOrElse(None)
 
 object Option:
