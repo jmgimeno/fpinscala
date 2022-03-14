@@ -73,7 +73,7 @@ object Monad:
     def unit[A](a: => A): Gen[A] = Gen.unit(a)
     extension [A](fa: Gen[A])
       override def flatMap[B](f: A => Gen[B]): Gen[B] =
-        fa.flatMap(f)
+        Gen.flatMap(fa)(f)
 
   given parMonad: Monad[Par] with
     def unit[A](a: => A) = ???
@@ -123,6 +123,8 @@ object Id:
 opaque type Reader[-R, +A] = R => A
 
 object Reader:
+  extension [R, A](ra: Reader[R, A])
+    def run(r: R): A = ra(r)
 
   given readerMonad[R]: Monad[Reader[R, _]] with
     def unit[A](a: => A): Reader[R, A] = ???
