@@ -100,17 +100,17 @@ object Option:
   def sequence_4[A](as: List[Option[A]]): Option[List[A]] =
     as match
       case Nil => Some(Nil)
-      case h :: t =>
+      case oa :: oas => // oas : List[Option[A]]
         for
-          a <- h
-          as <- sequence_4(t)
+          a <- oa
+          as <- sequence_4(oas)
         yield a :: as
 
   def sequence_5[A](as: List[Option[A]]): Option[List[A]] =
     as.foldRight(Some(Nil):Option[List[A]]) {
-      (h, acc) => for {
-        a <- h
-        as <- acc
+      (oa, oas) => for {
+        a <- oa
+        as <- oas // oas : Option[List[A]]
       } yield a :: as
     }
 
