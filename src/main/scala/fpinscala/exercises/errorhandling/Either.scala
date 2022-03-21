@@ -60,8 +60,17 @@ object Either:
     try Right(a)
     catch case NonFatal(t) => Left(t)
 
-  def map2All[E, A, B, C](a: Either[List[E], A], b: Either[List[E], B], f: (A, B) => C): Either[List[E], C] = ???
+  def map2All[E, A, B, C](a: Either[List[E], A], b: Either[List[E], B], f: (A, B) => C): Either[List[E], C] =
+    (a, b) match
+      case (Left(a), Left(b)) => Left(a ++ b)
+      case (Left(a), _) => Left(a)
+      case (_, Left(b)) => Left(b)
+      case (Right(a), Right(b)) => Right(f(a, b))
 
-  def traverseAll[E, A, B](es: List[A], f: A => Either[List[E], B]): Either[List[E], List[B]] = ???
+  def traverseAll[E, A, B](es: List[A], f: A => Either[List[E], B]): Either[List[E], List[B]] =
+    es.foldRight(Right(Nil):Either[List[E], List[B]])((a, acc) =>
+      map2All(f(a), acc, _ :: _)
+    )
 
-  def sequenceAll[E, A](es: List[Either[List[E], A]]): Either[List[E], List[A]] = ???
+  def sequenceAll[E, A](es: List[Either[List[E], A]]): Either[List[E], List[A]] =
+    traverseAll(es, identity)
