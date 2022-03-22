@@ -1,10 +1,18 @@
 package fpinscala.exercises.laziness
 
+// We import the definitions in the companion object
+// so we can use cons, empty, etc.
+import LazyList.*
+
 enum LazyList[+A]:
   case Empty
   case Cons(h: () => A, t: () => LazyList[A])
 
-  def toList: List[A] = ???
+  // Simple recursive solution
+  def toList: List[A] = this match
+      case Cons(h, t) => h() :: t().toList
+      case Empty => Nil
+
 
   def foldRight[B](z: => B)(f: (A, => B) => B): B = // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
     this match
@@ -19,15 +27,44 @@ enum LazyList[+A]:
     case Empty => None
     case Cons(h, t) => if (f(h())) Some(h()) else t().find(f)
 
-  def take(n: Int): LazyList[A] = ???
+  def take(n: Int): LazyList[A] = this match
+    case Cons(h, t) if n > 1 => cons(h(), t().take(n - 1))
+    case Cons(h, _) if n == 1 => cons(h(), Empty)
+    case _ => empty
 
-  def drop(n: Int): LazyList[A] = ???
+  /*
+  The idea is not to generate the call no t() when we
+  know there is no need (when n == 1)
 
-  def takeWhile(p: A => Boolean): LazyList[A] = ???
+  Cons(() => h1, () => Cons(() => h2, () => Cons(() => h3, () => Empty))).take(1)
+       --------  -------------------------------------------------------
+          h                               t
 
-  def forAll(p: A => Boolean): Boolean = ???
+  cpns(h(), t().take(0))
+  cons(h1, Cons(() => h2, () => Cons(() => h3, () => Empty)).take(0))
+  cons(h1, empty)
 
-  def headOption: Option[A] = ???
+  */
+
+  def drop(n: Int): LazyList[A] = this match
+    case Cons(_, t) if n > 0 => t().drop(n - 1)
+    case _ => this
+
+  def takeWhile(p: A => Boolean): LazyList[A] = this match
+    case Cons(h, t) if p(h()) => cons(h(), t().takeWhile(p))
+    case _ => Empty
+
+  def forAll(p: A => Boolean): Boolean = this match
+    case Cons(h, t) if (p(h())) => t().forAll(p)
+    case Empty => true
+    case _ => false
+
+  def forAll2(p: A => Boolean): Boolean =
+    this.foldRight(true)((a, acc) => p(a) && acc)
+
+  def headOption: Option[A] = this match
+    case Empty => None
+    case Cons(h, _) => Some(h())
 
   // 5.7 map, filter, append, flatmap using foldRight. Part of the exercise is
   // writing your own function signatures.
