@@ -5,6 +5,8 @@ package fpinscala.exercises.laziness
 import LazyList.*
 
 enum LazyList[+A]:
+  // If we define the value constructors Cons & Empty as private we can force
+  // users of LazyList to only use the smart versions cons & empty
   case Empty
   case Cons(h: () => A, t: () => LazyList[A])
 
@@ -12,7 +14,6 @@ enum LazyList[+A]:
   def toList: List[A] = this match
       case Cons(h, t) => h() :: t().toList
       case Empty => Nil
-
 
   def foldRight[B](z: => B)(f: (A, => B) => B): B = // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
     this match
@@ -32,6 +33,11 @@ enum LazyList[+A]:
     case Cons(h, _) if n == 1 => cons(h(), Empty)
     case _ => empty
 
+  // Forces the evaluation of the tail when it's not needed
+  def bad_take(n: Int): LazyList[A] = this match
+    case Cons(h, t) if n > 0 => cons(h(), t().take(n - 1))
+    case _ => empty
+
   /*
   The idea is not to generate the call no t() when we
   know there is no need (when n == 1)
@@ -46,20 +52,19 @@ enum LazyList[+A]:
 
   */
 
+  // Comentar que si la fem final la podem marcar com tailrec
   def drop(n: Int): LazyList[A] = this match
     case Cons(_, t) if n > 0 => t().drop(n - 1)
     case _ => this
 
+  // It seems that h() is evaluated twice but if we only use cons
+  // its "magic" of catches the value of h() so the second evaluation
+  // only gets the catch value
   def takeWhile(p: A => Boolean): LazyList[A] = this match
     case Cons(h, t) if p(h()) => cons(h(), t().takeWhile(p))
     case _ => Empty
 
-  def forAll(p: A => Boolean): Boolean = this match
-    case Cons(h, t) if (p(h())) => t().forAll(p)
-    case Empty => true
-    case _ => false
-
-  def forAll2(p: A => Boolean): Boolean =
+  def forAll(p: A => Boolean): Boolean =
     this.foldRight(true)((a, acc) => p(a) && acc)
 
   def headOption: Option[A] = this match
@@ -77,6 +82,10 @@ object LazyList:
     lazy val head = hd
     lazy val tail = tl
     Cons(() => head, () => tail)
+
+  // Bad cons that does not catch the evaluation of an already forced part
+  def bad_cons[A](hd: => A, tl: => LazyList[A]): LazyList[A] =
+    Cons(() => hd, () => tl)
 
   def empty[A]: LazyList[A] = Empty
 
