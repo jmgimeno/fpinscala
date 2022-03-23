@@ -64,8 +64,10 @@ enum LazyList[+A]:
     case Cons(h, t) if p(h()) => cons(h(), t().takeWhile(p))
     case _ => Empty
 
-  def forAll(p: A => Boolean): Boolean =
-    this.foldRight(true)((a, acc) => p(a) && acc)
+  def forAll(p: A => Boolean): Boolean = this match
+    case Cons(h, t) if p(h()) => t().forAll(p)
+    case Empty => true
+    case _ => false
 
   def headOption: Option[A] = this match
     case Empty => None
@@ -74,6 +76,22 @@ enum LazyList[+A]:
   // 5.7 map, filter, append, flatmap using foldRight. Part of the exercise is
   // writing your own function signatures.
 
+  def forAll_2(p: A => Boolean): Boolean =
+    this.foldRight(true)((a, acc) => p(a) && acc)
+
+  def takeWhile_2(p: A => Boolean): LazyList[A] = ???
+
+  def headOption_2: Option[A] = ???
+
+  def map[B](f: A => B): LazyList[B] = ???
+
+  def filter(p: A => Boolean): LazyList[A] = ???
+
+  def append[A2 >: A](that: => LazyList[A2]): LazyList[A2] = ???
+
+  def flatMap[B](f: A => LazyList[B]): LazyList[B] = ???
+
+  // This is to solve an example from datastructures we have not worked on
   def startsWith[B](s: LazyList[B]): Boolean = ???
 
 
