@@ -79,17 +79,42 @@ enum LazyList[+A]:
   def forAll_2(p: A => Boolean): Boolean =
     this.foldRight(true)((a, acc) => p(a) && acc)
 
-  def takeWhile_2(p: A => Boolean): LazyList[A] = ???
+  def takeWhile_2(p: A => Boolean): LazyList[A] =
+    this.foldRight(empty)((a, acc) =>
+      if p(a) then cons(a, acc) else empty
+    )
+  /*
+  def foldRight[B](z: => B)(f: (A, => B) => B): B =
+    this match
+      case Cons(h,t) => f(h(), t().foldRight(z)(f))
+      case _ => z
 
-  def headOption_2: Option[A] = ???
+  Simply substituting the parameters we pass to foldRight inside
+  takeWhile_2 we recover the original definition of takeWhile
 
-  def map[B](f: A => B): LazyList[B] = ???
+  def takeWhile_2(p: A => Boolean): LazyList[A] =
+    this match
+      case Cons(h, t) =>
+        if p(h()) then cons(h(), t().takeWhile_2(p)) else empty
+      case _ => empty
+  */
 
-  def filter(p: A => Boolean): LazyList[A] = ???
+  def headOption_2: Option[A] =
+    this.foldRight(None:Option[A])((a, _) => Some(a))
 
-  def append[A2 >: A](that: => LazyList[A2]): LazyList[A2] = ???
+  def map[B](f: A => B): LazyList[B] =
+    this.foldRight(empty)((a, acc) => cons(f(a), acc))
 
-  def flatMap[B](f: A => LazyList[B]): LazyList[B] = ???
+  def filter(p: A => Boolean): LazyList[A] =
+    this.foldRight(empty)((a, acc) =>
+      if p(a) then cons(a, acc) else acc
+    )
+
+  def append[A2 >: A](that: => LazyList[A2]): LazyList[A2] =
+    this.foldRight(that)((a, acc) => cons(a, acc))
+
+  def flatMap[B](f: A => LazyList[B]): LazyList[B] =
+    this.foldRight(empty)((a, acc) => f(a).append(acc))
 
   // This is to solve an example from datastructures we have not worked on
   def startsWith[B](s: LazyList[B]): Boolean = ???
@@ -113,11 +138,17 @@ object LazyList:
 
   val ones: LazyList[Int] = LazyList.cons(1, ones)
 
-  def continually[A](a: A): LazyList[A] = ???
+  def continually[A](a: A): LazyList[A] =
+    lazy val loop: LazyList[A] = cons(a, loop)
+    loop
 
-  def from(n: Int): LazyList[Int] = ???
+  def from(n: Int): LazyList[Int] =
+    cons(n, from(n + 1))
 
-  lazy val fibs: LazyList[Int] = ???
+  lazy val fibs: LazyList[Int] =
+    def go(current: Int, next: Int): LazyList[Int] =
+      cons(current, go(next, current + next))
+    go(0, 1)
 
   def unfold[A, S](state: S)(f: S => Option[(A, S)]): LazyList[A] = ???
 

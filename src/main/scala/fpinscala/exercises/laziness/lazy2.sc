@@ -116,7 +116,9 @@ val costly_lazy_list3 =
         })
     })
 
-costly_lazy_list3.takeWhile(_ < 2).toList
+costly_lazy_list3.takeWhile(_ < 3).toList
+
+fibs.take(10)
 
 
 
