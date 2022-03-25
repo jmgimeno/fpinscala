@@ -65,7 +65,7 @@ enum LazyList[+A]:
     case Cons(h,t) if f(h()) => cons(h(), t().takeWhile(f))
     case _ => empty
 
-  def foldRight[B](z: => B)(f: (A, => B) => B): B = // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
+  def foldRight[B](z: => B)(f: (=> A, => B) => B): B = // The arrow `=>` in front of an argument type means that the function `f` takes that argument by name and may choose not to evaluate it.
     this match
       case Cons(h,t) => f(h(), t().foldRight(z)(f)) // If `f` doesn't evaluate its second argument, the recursion never occurs.
       case _ => z
@@ -169,7 +169,7 @@ enum LazyList[+A]:
 
   The implementation is just a `foldRight` that keeps the accumulated value and the lazy list of intermediate results, which we `cons` onto during each iteration. When writing folds, it's common to have more state in the fold than is needed to compute the result. Here, we simply extract the accumulated list once finished.
   */
-  def scanRight[B](init: B)(f: (A, => B) => B): LazyList[B] =
+  def scanRight[B](init: B)(f: (=> A, => B) => B): LazyList[B] =
     foldRight(init -> LazyList(init)) { (a, b0) =>
       // b0 is passed by-name and used in by-name args in f and cons. So use lazy val to ensure only one evaluation...
       lazy val b1 = b0
