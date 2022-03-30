@@ -81,10 +81,37 @@ object RNG:
       }
     go(count, rng, Nil)
 
+  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
+    rng =>
+      val (a, rng2) = ra(rng)
+      val (b, rng3) = rb(rng2)
+      (f(a, b), rng3)
 
-  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
+  def both[A, B](ra: Rand[A], rb: Rand[B]): Rand[(A, B)] =
+    map2(ra, rb)((_, _))
 
-  def sequence[A](rs: List[Rand[A]]): Rand[List[A]] = ???
+  /*
+    Let's try to use foldRight which is the natural way to construct things on lists (respecting the order)
+
+                                rs.foldRight(???1) ((a, acc) => ???2))
+
+    ???1:
+      - Has the type of the result, that is, Rand[List[A]] = RNG => (List[A], RNG)
+      - It's the value to return when rs list is empty, that is, we have no Rand[A]
+      - If we have no means of creating A's the only List[A] we can generate is Nil
+      - So we need a function: RNG => (Nil, RNG)
+      - This can be obtained by unit(Nil)
+     ???2:
+      - Has the type of the result, that is, Rand[List[A]] = RNG => (List[A], RNG)
+      - We can use the parameters a and acc which have type:
+        a: has the type of the elements of the list, that is, Rand[A]
+        acc: is the result of sequence on the rest of the list, that is, has type Rand[List[A]]
+      - So I have a Rand[A] and a Rand[List[A]] and I have to create a Rand[List[A]], what can I use?
+        - map2 using a combining function (f) that given an A and a List[A] adds A to the List[A]
+        - that is the equivalent of Cons in the scala library or _ :: _
+  */
+  def sequence[A](rs: List[Rand[A]]): Rand[List[A]] =
+    rs.foldRight(unit(Nil):Rand[List[A]])((a, acc) => map2(a, acc)(_ :: _))
 
   def flatMap[A, B](r: Rand[A])(f: A => Rand[B]): Rand[B] = ???
 
