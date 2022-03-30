@@ -93,7 +93,7 @@ object RNG:
   /*
     Let's try to use foldRight which is the natural way to construct things on lists (respecting the order)
 
-                                rs.foldRight(???1) ((a, acc) => ???2))
+                                rs.foldRight(???1) ((ra, acc) => ???2))
 
     ???1:
       - Has the type of the result, that is, Rand[List[A]] = RNG => (List[A], RNG)
@@ -104,14 +104,31 @@ object RNG:
      ???2:
       - Has the type of the result, that is, Rand[List[A]] = RNG => (List[A], RNG)
       - We can use the parameters a and acc which have type:
-        a: has the type of the elements of the list, that is, Rand[A]
+        ra: has the type of the elements of the list, that is, Rand[A]
         acc: is the result of sequence on the rest of the list, that is, has type Rand[List[A]]
       - So I have a Rand[A] and a Rand[List[A]] and I have to create a Rand[List[A]], what can I use?
         - map2 using a combining function (f) that given an A and a List[A] adds A to the List[A]
         - that is the equivalent of Cons in the scala library or _ :: _
+
+    If yoy have problems with what is going on inside the foldRight, you can instead of using map2
+    use its definition, that is:
+
+    rs.foldRight(unit(Nil):Rand[List[A]])((ra, acc) =>
+      rng =>                       // given a RNG
+        val (a, rng2) = ra(rng)    // we extract an A and a new RNG from the Rand[A] in the List
+        val (as, rng3) = acc(rng2) // we use the returned RNG to extract the rest of the List and the next RNG
+        (a :: as, rng3)            // we add the element to the list and return it paired with the next RNG
+    )
+
+    But all of this minutiae is boilerplate that can be delegated to map2 and consider only in the way to combine
+    an A and a List[A] which we have "inside" the structure of type Rand[A] and Rand[List[A]].
+
+    The creation of the function and the weaving of the RNG is programmed once in map2 and we can concentrate in the
+    "essential" task, which is the _ :: _
+
   */
   def sequence[A](rs: List[Rand[A]]): Rand[List[A]] =
-    rs.foldRight(unit(Nil):Rand[List[A]])((a, acc) => map2(a, acc)(_ :: _))
+    rs.foldRight(unit(Nil):Rand[List[A]])((ra, acc) => map2(ra, acc)(_ :: _))
 
   def flatMap[A, B](r: Rand[A])(f: A => Rand[B]): Rand[B] = ???
 
