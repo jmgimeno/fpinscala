@@ -64,4 +64,5 @@ val gggg = ffff(23)
 // Then we can call this new function to get the final result
 gggg(2)
 
+ints_3(4)(rng)
 
