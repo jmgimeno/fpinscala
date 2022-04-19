@@ -1,4 +1,4 @@
-package fpinscala.answers.streamingio
+package fpinscala.exercises.streamingio
 
 import fpinscala.answers.iomonad.{IO, Monad}
 import fpinscala.answers.monoids.Monoid
@@ -150,11 +150,9 @@ object EffectfulPulls:
         case Left(r) => Result(r)
         case Right((o, r2)) => Output(o) >> unfold(r2)(f)
 
+    // Exercise 15.11
     def unfoldEval[F[_], O, R](init: R)(f: R => F[Either[R, (O, R)]]): Pull[F, O, R] =
-      Pull.Eval(f(init)).flatMap {
-        case Left(r) => Result(r)
-        case Right((o, r2)) => Output(o) >> unfoldEval(r2)(f)
-      }
+      ???
 
     extension [F[_], R](self: Pull[F, Int, R])
       def slidingMean(n: Int): Pull[F, Double, R] =
@@ -213,14 +211,13 @@ object EffectfulPulls:
     def iterate[O](initial: O)(f: O => O): Stream[Nothing1, O] =
       Pull.Output(initial) >> iterate(f(initial))(f)
 
+    // Exercise 15.9
     def eval[F[_], O](fo: F[O]): Stream[F, O] =
-      Pull.Eval(fo).flatMap(Pull.Output(_))
+      ???
 
+    // Exercise 15.11
     def unfoldEval[F[_], O, R](init: R)(f: R => F[Option[(O, R)]]): Stream[F, O] =
-      Pull.Eval(f(init)).flatMap {
-        case None => Stream.empty
-        case Some((o, r)) => Pull.Output(o) ++ unfoldEval(r)(f)
-      }
+      ???
 
     extension [F[_], O](self: Stream[F, O])
       def toPull: Pull[F, O, Unit] = self
@@ -252,8 +249,9 @@ object EffectfulPulls:
       def flatMap[O2](f: O => Stream[F, O2]): Stream[F, O2] =
         self.flatMapOutput(f)
 
+      // Exercise 15.10
       def mapEval[O2](f: O => F[O2]): Stream[F, O2] =
-        Stream.flatMap(self)(o => Stream.eval(f(o)))
+        ???
 
     extension [O](self: Stream[Nothing, O])
       def fold[A](init: A)(f: (A, O) => A): A = 
