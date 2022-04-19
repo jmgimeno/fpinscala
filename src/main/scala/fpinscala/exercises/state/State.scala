@@ -82,7 +82,9 @@ object RNG:
     go(count, rng, Nil)
 
   def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
+    println("temps de map2")
     rng =>
+      println("temps de generació")
       val (a, rng2) = ra(rng)
       val (b, rng3) = rb(rng2)
       (f(a, b), rng3)
@@ -144,22 +146,59 @@ object RNG:
   def map2ViaFlatMap[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
     flatMap(ra)(a => map(rb)(b => f(a, b)))
 
+// Outside the scope of State (this compilation unit State.scala) nobody knows that
+// State[S, A] is just a synonym for S => (A, S)
+// Inside the companion object I can use freely an State[S, A] as a S => (A, S)
+// Outside the compilation unit the only thiog I can do on an State is use the methods
+// defined in its interface that, in this case, are the extension methods.
+// It's the same idea of the private part of a class: inside the class I knoe its internal
+// representations, outside the class, I only know its interface.
 opaque type State[S, +A] = S => (A, S)
 
-object State:
+object State:                  // S => (A, S)
   extension[S, A] (underlying: State[S, A])
     def run(s: S): (A, S) = underlying(s)
-
+                           // S => (B, S)
     def map[B](f: A => B): State[S, B] =
       ???
 
     def map2[B, C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
-      ???
+      s =>
+        val (a, s2) = underlying(s)
+        val (b, s3) = sb(s2)
+        (f(a,b), s3)
+
+    def map2ViaFlatMap[B, C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
+      underlying.flatMap(a => sb.map(b => f(a,b)))
+
+    def map2ViaFlatMapFor[B, C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
+      for
+        a <- underlying
+        b <- sb
+      yield f(a, b)
 
     def flatMap[B](f: A => State[S, B]): State[S, B] =
       ???
 
   def apply[S, A](f: S => (A, S)): State[S, A] = f
+
+  def unit[S, A](a: A): State[S, A] =
+    s => (a, s)
+
+  def sequence[S, A](actions: List[State[S, A]]): State[S, List[A]] =
+    actions.foldRight(unit(Nil):State[S, List[A]])((sa , acc) => sa.map2(acc)(_ :: _))
+
+  def sequenceViaTraverse[S, A](actions: List[State[S, A]]): State[S, List[A]] =
+    traverse(actions)(identity)
+
+  def traverse[S, A, B](as: List[A])(f: A => State[S, B]): State[S, List[B]] =
+    as.foldRight(unit(Nil):State[S, List[B]])((a , acc) => f(a).map2(acc)(_ :: _))
+
+  def get[S]: State[S, S] = ???
+
+  def set[S](s: S): State[S, Unit] = ???
+
+  def modify[S](f: S => S): State[S, Unit] = ???
 
 enum Input:
   case Coin, Turn

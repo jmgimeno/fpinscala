@@ -35,8 +35,12 @@ val (q, rng3) = r(rng2)
 ((p, q), rng3)
 
 // We can use map2 to create more complex Rand's
+println("abans de map2")
 val rr = map2(r, r)((_, _))
+println("després de map2")
+println("abans de generar")
 rr(rng)
+println("després de generar")
 
 // From a list of 10 Rand's that each one generates an Int
 val l = List.fill(10)(nonNegativeInt)
