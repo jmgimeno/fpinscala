@@ -160,13 +160,15 @@ object State:                  // S => (A, S)
     def run(s: S): (A, S) = underlying(s)
                            // S => (B, S)
     def map[B](f: A => B): State[S, B] =
-      ???
+      s =>
+        val (a, s2) = underlying(s)
+        (f(a), s2)
 
     def map2[B, C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
       s =>
         val (a, s2) = underlying(s)
         val (b, s3) = sb(s2)
-        (f(a,b), s3)
+        (f(a, b), s3)
 
     def map2ViaFlatMap[B, C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
       underlying.flatMap(a => sb.map(b => f(a,b)))
@@ -178,7 +180,9 @@ object State:                  // S => (A, S)
       yield f(a, b)
 
     def flatMap[B](f: A => State[S, B]): State[S, B] =
-      ???
+      s =>
+        val (a, s2) = underlying(s)
+        f(a)(s2)
 
   def apply[S, A](f: S => (A, S)): State[S, A] = f
 
