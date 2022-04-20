@@ -1,7 +1,12 @@
 import fpinscala.exercises.state.State
 import State.*
 
-extension (n: Int)
-  def patata: String = s"$n patata"
+                         // Int => (Unit, Int)
+def sum(a: Int, b: Int): State[Int, Unit] =
+  for
+    _ <- set(a)
+    _ <- modify((acc: Int) => acc + b)
+  yield ()
 
-2.patata
+sum(3, 4).run(42)
+

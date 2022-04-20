@@ -198,11 +198,12 @@ object State:                  // S => (A, S)
   def traverse[S, A, B](as: List[A])(f: A => State[S, B]): State[S, List[B]] =
     as.foldRight(unit(Nil):State[S, List[B]])((a , acc) => f(a).map2(acc)(_ :: _))
 
-  def get[S]: State[S, S] = ???
+  def get[S]: State[S, S] = s => (s, s)
 
-  def set[S](s: S): State[S, Unit] = ???
+  def set[S](s: S): State[S, Unit] = _ => ((), s)
 
-  def modify[S](f: S => S): State[S, Unit] = ???
+  def modify[S](f: S => S): State[S, Unit] =
+    get.flatMap(s => set(f(s)).map(_ => ()))
 
 enum Input:
   case Coin, Turn
@@ -210,4 +211,31 @@ enum Input:
 case class Machine(locked: Boolean, candies: Int, coins: Int)
 
 object Candy:
-  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = ???
+
+  import Input.*
+
+  def step(input: Input)(machine : Machine): Machine =
+    (input, machine) match
+      case (Coin, Machine(true, candies, coins)) if candies > 0
+        => Machine(false, candies, coins + 1)
+      case (Turn, Machine(false, candies, coins))
+        => Machine(true, candies - 1, coins)
+      case (_, machine) => machine
+
+  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] =
+    for
+      //_ <- State.sequence(inputs.map(i => State.modify(step(i))))
+      _ <- State.traverse(inputs)(i => State.modify(step(i)))
+      m <- State.get
+    yield (m.coins, m.candies)
+
+    /* Very ugly initial version (w/o thinking so much)
+    State( machine =>
+      val combined: Machine => Machine
+        = inputs.foldRight(identity[Machine])
+                          ((input, acc) => step(input).andThen(acc))
+      val machine2 = combined(machine)
+      ((machine2.coins, machine2.candies), machine2)
+    )
+    */
+
