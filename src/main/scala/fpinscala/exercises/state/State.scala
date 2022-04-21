@@ -222,20 +222,30 @@ object Candy:
         => Machine(true, candies - 1, coins)
       case (_, machine) => machine
 
+  def simulateMachine_1(inputs: List[Input]): State[Machine, (Int, Int)] =
+    //Very ugly initial version (w/o thinking so much)
+    val combined = inputs.foldRight(identity[Machine])((input, acc) => step(input).andThen(acc))
+    State { initialMachine =>
+      val finalMachine = combined(initialMachine)
+      ((finalMachine.coins, finalMachine.candies), finalMachine)
+    }
+
+  def simulateMachine_2(inputs: List[Input]): State[Machine, (Int, Int)] =
+    val combined = inputs.foldRight(identity[Machine])(step(_).andThen(_))
+    val combinedAction = State.modify(combined)
+    for
+      _ <- combinedAction
+      finalMachine <- State.get
+    yield (finalMachine.coins, finalMachine.candies)
+
+  def simulateMachine_3(inputs: List[Input]): State[Machine, (Int, Int)] =
+    for
+      _ <- State.sequence(inputs.map(i => State.modify(step(i))))
+      finalMachine <- State.get
+    yield (finalMachine.coins, finalMachine.candies)
+
   def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] =
     for
-      //_ <- State.sequence(inputs.map(i => State.modify(step(i))))
       _ <- State.traverse(inputs)(i => State.modify(step(i)))
-      m <- State.get
-    yield (m.coins, m.candies)
-
-    /* Very ugly initial version (w/o thinking so much)
-    State( machine =>
-      val combined: Machine => Machine
-        = inputs.foldRight(identity[Machine])
-                          ((input, acc) => step(input).andThen(acc))
-      val machine2 = combined(machine)
-      ((machine2.coins, machine2.candies), machine2)
-    )
-    */
-
+      finalMachine <- State.get
+    yield (finalMachine.coins, finalMachine.candies)
