@@ -43,8 +43,10 @@ class CandySuite extends PropSuite:
       coins   <- genNonNegInt
     yield Machine(locked, candies, coins)
 
-  test("Candy: a machine that’s out of candy")(genInputList ** genNoCandiesMachine) { case inputs ** machine =>
-    val ((coins, candies), machine1): ((Int, Int), Machine) = simulateMachine(inputs).run(machine)
+  test("Candy: a machine that’s out of candy")(genInputList ** genNoCandiesMachine) {
+    case inputs ** machine =>
+    val ((coins, candies), machine1): ((Int, Int), Machine)
+      = simulateMachine(inputs).run(machine)
     assertEquals(candies, 0)
     assertEquals(coins, machine.coins)
     assertEquals(machine1, machine) // A machine that’s out of candy ignores all inputs.
@@ -86,7 +88,7 @@ class CandySuite extends PropSuite:
 
     assertEquals(candies, machine.candies - spentCoins)
     assertEquals(coins, machine.coins + spentCoins)
-    assertEquals(machine1, Machine(true, candies, coins))
+    assertEquals(machine1, Machine(true, machine.candies - spentCoins, machine.coins + spentCoins))
   }
 
   test("Candy: empty inputs")(genMachine) { machine =>

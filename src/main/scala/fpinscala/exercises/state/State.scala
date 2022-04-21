@@ -218,13 +218,14 @@ object Candy:
     (input, machine) match
       case (Coin, Machine(true, candies, coins)) if candies > 0
         => Machine(false, candies, coins + 1)
-      case (Turn, Machine(false, candies, coins))
+      case (Turn, Machine(false, candies, coins)) if candies > 0
         => Machine(true, candies - 1, coins)
       case (_, machine) => machine
 
   def simulateMachine_1(inputs: List[Input]): State[Machine, (Int, Int)] =
     //Very ugly initial version (w/o thinking so much)
-    val combined = inputs.foldRight(identity[Machine])((input, acc) => step(input).andThen(acc))
+    val combined
+      = inputs.foldRight(identity[Machine])((input, acc) => step(input).andThen(acc))
     State { initialMachine =>
       val finalMachine = combined(initialMachine)
       ((finalMachine.coins, finalMachine.candies), finalMachine)
