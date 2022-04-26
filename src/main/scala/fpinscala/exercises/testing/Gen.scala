@@ -39,7 +39,10 @@ object Gen:
   //def flatMap[B](f: A => State[RNG, B]): State[RNG, B] =
     def flatMap[B](f: A => Gen[B]): Gen[B] =
       State.flatMap(self)(f)      //self.flatMap(f) infinite recursion
-
+      //^^^we can call to the extension method defined in the
+      //   companion object as a regular method of the object
+      //   passing the "extended object" in a first parameter
+      //   list
     def listOfN(size: Gen[Int]): Gen[List[A]] =
       size.flatMap(listOfN)
 
