@@ -17,6 +17,7 @@ opaque type Prop = (TestCases, RNG) => Result
 
 object Prop:
 
+  opaque type MaxSize = Int
   opaque type TestCases = Int
   opaque type SuccessCount = Int
   opaque type FailedCase = String
@@ -32,13 +33,14 @@ object Prop:
   end Result
 
   def forAll[A](as: Gen[A])(f: A => Boolean): Prop =
-    (n, rng) => randomLazyList(as)(rng).zip(LazyList.from(0)).take(n).map {
-      case (a, i) =>
-        try
-          if f(a) then Passed else Falsified(a.toString, i)
-        catch
-          case e: Exception => Falsified(buildMsg(a, e), i)
-    }.find(_.isFalsified).getOrElse(Passed)
+    (n, rng) =>
+      randomLazyList(as)(rng).zip(LazyList.from(0)).take(n).map {
+        case (a, i) =>
+          try
+            if f(a) then Passed else Falsified(a.toString, i)
+          catch
+            case e: Exception => Falsified(buildMsg(a, e), i)
+      }.find(_.isFalsified).getOrElse(Passed)
 
   def randomLazyList[A](g: Gen[A])(rng: RNG): LazyList[A] =
     LazyList.unfold(rng)(rng => Some(g.run(rng)))
@@ -49,12 +51,47 @@ object Prop:
       s"stack trace:\n ${e.getStackTrace.mkString("\n")}"
 
   extension (self: Prop)
-    def &&(that: Prop): Prop = ???
-    def ||(that: Prop): Prop = ???
+    def &&(that: Prop): Prop =
+      (n, rng) => self(n, rng) match
+        case Passed => that(n, rng)
+        case falsified => falsified
 
+    def ||(that: Prop): Prop =
+      (n, rng) => self(n, rng) match
+        case Passed => Passed
+        case _ => that(n, rng)
+
+  /*
+  forAll[A](g: Gen[A])(f: A => Boolean): Prop
+  forAll[A](g: SGen[A])(f: A => Boolean): Prop
+
+  have the same erasure because:
+
+  Gen[A] = State[RNG, A] = RNG => (A, RNG)
+  SGen[A] = Int => Gen[A] = Int => (RNG => (A, RNG)
+
+  and in Scala, A => B is of type Function1[A, B] so the types are
+
+  Function1[RNG, Pair2[A, RNG]] and Function1[Int, Function1[RNG, Pair2[A, RNG]]]
+
+  both having erasure (that is, removing the generic types) Function1
+
+  so we use @targetName to create an (internal for the JVM) name to disambiguate
+  */
   @targetName("forAllSized")
   def forAll[A](g: SGen[A])(f: A => Boolean): Prop = ???
+  /*
+    See the implementation in package answers cause there is code to make compatible both versions
+    of forAll and solve some problems with opaque types
 
+    (max, n, rng) =>
+      val casesPerSize = (n.toInt - 1) / max.toInt + 1
+      val props: LazyList[Prop] =
+        LazyList.from(0).take((n.toInt min max.toInt) + 1).map(i => forAll(g(i))(f))
+      val prop: Prop =
+        props.map[Prop](p => (max, n, rng) => p(max, casesPerSize, rng)).toList.reduce(_ && _)
+      prop(max, n, rng)
+  */
 end Prop
 
 opaque type Gen[+A] = State[RNG, A]
@@ -89,9 +126,11 @@ object Gen:
 
     def sample(rng: RNG): A = self.run(rng)._1 // Added for tests in the worksheet
 
-    def unsized: SGen[A] = ???
+    def unsized: SGen[A] =
+      _ => self
 
-    def list: SGen[List[A]] = ???
+    def list: SGen[List[A]] =
+      s => self.listOfN(s)
 
   end extension
 
