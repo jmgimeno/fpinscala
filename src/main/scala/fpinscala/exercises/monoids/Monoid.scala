@@ -1,7 +1,6 @@
 package fpinscala.exercises.monoids
 
 import fpinscala.exercises.parallelism.Nonblocking.*
-import language.higherKinds
 
 trait Monoid[A]:
   def combine(a1: A, a2: A): A
@@ -10,33 +9,71 @@ trait Monoid[A]:
 object Monoid:
 
   val stringMonoid: Monoid[String] = new:
-    def combine(a1: String, a2: String) = a1 + a2
-    val empty = ""
+    def combine(a1: String, a2: String): String = a1 + a2
+    val empty: String = ""
 
   def listMonoid[A]: Monoid[List[A]] = new:
-    def combine(a1: List[A], a2: List[A]) = a1 ++ a2
-    val empty = Nil
+    def combine(a1: List[A], a2: List[A]): List[A] = a1 ++ a2
+    val empty: List[A] = List.empty[A]
 
-  lazy val intAddition: Monoid[Int] = ???
+//  val intListMonoid = listMonoid[Int]
 
-  lazy val intMultiplication: Monoid[Int] = ???
+//  val intListMonoid: Monoid[List[Int]] = new:
+//    def combine(li1: List[Int], li2: List[Int]) = li1 ++ li2
+//    val empty = List.empty[Int]
+//
+//  val stringListMonoid: Monoid[List[String]] = new:
+//    def combine(li1: List[String], li2: List[String]) = li1 ++ li2
+//    val empty = List.empty[String]
 
-  lazy val booleanOr: Monoid[Boolean] = ???
+  lazy val intAddition: Monoid[Int] = new:
+    def combine(i1: Int, i2: Int): Int = i1 + i2
+    val empty: Int = 0
 
-  lazy val booleanAnd: Monoid[Boolean] = ???
+  lazy val intMultiplication: Monoid[Int] = new:
+    def combine(i1: Int, i2: Int): Int = i1 * i2
+    val empty: Int = 1
 
-  def optionMonoid[A]: Monoid[Option[A]] = ???
+  lazy val booleanOr: Monoid[Boolean] = new :
+    def combine(a1: Boolean, a2: Boolean): Boolean = a1 || a2
+    val empty: Boolean = false
+
+  lazy val booleanAnd: Monoid[Boolean] = new Monoid[Boolean]:
+    def combine(a1: Boolean, a2: Boolean): Boolean = a1 && a2
+    val empty: Boolean = true
+
+  def optionMonoid[A]: Monoid[Option[A]] = new Monoid[Option[A]]:
+    def combine(a1: Option[A], a2: Option[A]): Option[A] = a1.orElse(a2)
+    val empty: Option[A] = None
+
+  def optionMonoid_alt[A](m: Monoid[A]) : Monoid[Option[A]]= new Monoid[Option[A]]:
+    def combine(o1: Option[A], o2: Option[A]): Option[A] = (o1, o2) match
+      case (Some(a1), Some(a2)) => Some(m.combine(a1, a2))
+      case (_, None) => o1
+      case (None, _) => o2
+    val empty: Option[A] = None
 
   def dual[A](m: Monoid[A]): Monoid[A] = new:
     def combine(x: A, y: A): A = m.combine(y, x)
-    val empty = m.empty
+    val empty: A = m.empty
 
-  def endoMonoid[A]: Monoid[A => A] = ???
+  def endoMonoid[A]: Monoid[A => A] = new Monoid[A => A]:
+    def combine(f1: A => A, f2: A => A): A => A = f1.andThen(f2)
+    val empty: A => A = identity
 
-  import fpinscala.exercises.testing.{Prop, Gen}
-  // import Gen.`**`
+  import fpinscala.answers.testing.{Prop, Gen}
+   import Gen.`**`
 
-  def monoidLaws[A](m: Monoid[A], gen: Gen[A]): Prop = ???
+  def monoidLaws[A](m: Monoid[A], gen: Gen[A]): Prop =
+    val neutral: Prop = Prop.forAll(gen) { a =>
+      m.combine(a, m.empty) == a && m.combine(m.empty, a) == a
+    }
+
+    val associaticity: Prop = Prop.forAll(gen ** gen ** gen) { case a1 ** a2 ** a3 =>
+      m.combine(a1, m.combine(a2, a3)) == m.combine(m.combine(a1, a2), a3)
+    }
+
+    neutral && associaticity
 
   def combineAll[A](as: List[A], m: Monoid[A]): A =
     ???
