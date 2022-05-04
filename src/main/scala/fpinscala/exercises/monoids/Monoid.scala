@@ -47,8 +47,11 @@ object Monoid:
     val empty: Option[A] = None
 
   def optionMonoid_combining[A](m: Monoid[A]) : Monoid[Option[A]] = new:
-    def combine(o1: Option[A], o2: Option[A]): Option[A] =
-      for { a1 <- o1; a2 <- o2 } yield m.combine(a1, a2)
+    def combine(o1: Option[A], o2: Option[A]): Option[A] = (o1, o2) match
+      case (Some(a1), Some(a2)) => Some(m.combine(a1, a2))
+      case (None, o) => o
+      case (o, None) => o
+
     val empty: Option[A] = None
 
   def dual[A](m: Monoid[A]): Monoid[A] = new:
@@ -60,7 +63,7 @@ object Monoid:
     val empty: A => A = identity
 
   import fpinscala.answers.testing.{Prop, Gen}
-   import Gen.`**`
+  import Gen.`**`
 
   def monoidLaws[A](m: Monoid[A], gen: Gen[A]): Prop =
     val neutral: Prop = Prop.forAll(gen) { a =>
@@ -72,19 +75,34 @@ object Monoid:
     neutral && associativity
 
   def combineAll[A](as: List[A], m: Monoid[A]): A =
-    ???
+    as.foldLeft(m.empty)(m.combine)
 
   def foldMap[A, B](as: List[A], m: Monoid[B])(f: A => B): B =
-    ???
+    // combineAll(as.map(f), m) but too many list traversals !!!
+    as.foldLeft(m.empty)((acc, a) => m.combine(acc, f(a)))
 
+  /*
+     val l = List(a1, a2)
+     via foldRight(acc)(f):
+                   a1 f (a2 f acc)
+     via foldMap:
+                   ((identity andThen f(a1)) andThen f(a2))(acc)
+
+     so I need the first function to be applied be f(a2)
+       => I need the dual of the endoMonoid !!!
+  */
   def foldRight[A, B](as: List[A])(acc: B)(f: (A, B) => B): B =
-    ???
+    foldMap(as, dual(endoMonoid))(a => b => f(a, b))(acc)
 
   def foldLeft[A, B](as: List[A])(acc: B)(f: (B, A) => B): B =
-    ???
+    foldMap(as, endoMonoid)(a => b => f(b, a))(acc)
 
   def foldMapV[A, B](as: IndexedSeq[A], m: Monoid[B])(f: A => B): B =
-    ???
+    as.length match
+      case 0 => m.empty
+      case 1 => f(as(0))
+      case n => val (left, right) = as.splitAt(n / 2)
+                m.combine(foldMapV(left, m)(f), foldMapV(right, m)(f))
 
   def par[A](m: Monoid[A]): Monoid[Par[A]] = 
     ???
@@ -99,7 +117,17 @@ object Monoid:
     case Stub(chars: String)
     case Part(lStub: String, words: Int, rStub: String)
 
-  lazy val wcMonoid: Monoid[WC] = ???
+  lazy val wcMonoid: Monoid[WC] = new Monoid[WC]:
+    import WC.*
+    def combine(wc1: WC, wc2: WC): WC = (wc1, wc2) match
+      case (Part(l1, w1, r1), Part(l2, w2, r2)) =>
+        val wordsInTheMiddle = if (r1 + l2).isEmpty then 0 else 1
+        Part(l1, w1 + wordsInTheMiddle + w2, r2)
+      case (Part(l1, w1, r1), Stub(s2)) => Part(l1, w1, r1 + s2)
+      case (Stub(s1), Part(l2, w2, r2)) => Part(s1 + l2, w2, r2)
+      case (Stub(s1), Stub(s2)) => Stub(s1 + s2)
+
+    val empty: WC = Stub("")
 
   def count(s: String): Int = ???
 
