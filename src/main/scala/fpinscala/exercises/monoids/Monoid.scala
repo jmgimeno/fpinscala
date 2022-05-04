@@ -38,26 +38,24 @@ object Monoid:
     def combine(a1: Boolean, a2: Boolean): Boolean = a1 || a2
     val empty: Boolean = false
 
-  lazy val booleanAnd: Monoid[Boolean] = new Monoid[Boolean]:
+  lazy val booleanAnd: Monoid[Boolean] = new:
     def combine(a1: Boolean, a2: Boolean): Boolean = a1 && a2
     val empty: Boolean = true
 
-  def optionMonoid[A]: Monoid[Option[A]] = new Monoid[Option[A]]:
+  def optionMonoid[A]: Monoid[Option[A]] = new:
     def combine(a1: Option[A], a2: Option[A]): Option[A] = a1.orElse(a2)
     val empty: Option[A] = None
 
-  def optionMonoid_alt[A](m: Monoid[A]) : Monoid[Option[A]]= new Monoid[Option[A]]:
-    def combine(o1: Option[A], o2: Option[A]): Option[A] = (o1, o2) match
-      case (Some(a1), Some(a2)) => Some(m.combine(a1, a2))
-      case (_, None) => o1
-      case (None, _) => o2
+  def optionMonoid_combining[A](m: Monoid[A]) : Monoid[Option[A]] = new:
+    def combine(o1: Option[A], o2: Option[A]): Option[A] =
+      for { a1 <- o1; a2 <- o2 } yield m.combine(a1, a2)
     val empty: Option[A] = None
 
   def dual[A](m: Monoid[A]): Monoid[A] = new:
     def combine(x: A, y: A): A = m.combine(y, x)
     val empty: A = m.empty
 
-  def endoMonoid[A]: Monoid[A => A] = new Monoid[A => A]:
+  def endoMonoid[A]: Monoid[A => A] = new:
     def combine(f1: A => A, f2: A => A): A => A = f1.andThen(f2)
     val empty: A => A = identity
 
@@ -68,12 +66,10 @@ object Monoid:
     val neutral: Prop = Prop.forAll(gen) { a =>
       m.combine(a, m.empty) == a && m.combine(m.empty, a) == a
     }
-
-    val associaticity: Prop = Prop.forAll(gen ** gen ** gen) { case a1 ** a2 ** a3 =>
+    val associativity: Prop = Prop.forAll(gen ** gen ** gen) { case a1 ** a2 ** a3 =>
       m.combine(a1, m.combine(a2, a3)) == m.combine(m.combine(a1, a2), a3)
     }
-
-    neutral && associaticity
+    neutral && associativity
 
   def combineAll[A](as: List[A], m: Monoid[A]): A =
     ???
