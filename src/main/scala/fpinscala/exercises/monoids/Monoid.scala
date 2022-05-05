@@ -110,8 +110,16 @@ object Monoid:
   def parFoldMap[A,B](v: IndexedSeq[A], m: Monoid[B])(f: A => B): Par[B] = 
     ???
 
+  case class SortedInfo(sorted: Boolean, min: Int, max: Int)
+  val sortedInfoMonoid: Monoid[SortedInfo] = new:
+    def combine(left: SortedInfo, right: SortedInfo): SortedInfo =
+      val SortedInfo(ls, lmin, lmax) = left
+      val SortedInfo(rs, rmin, rmax) = right
+      SortedInfo(ls && rs && lmax <= rmin, lmin min rmin, lmax max rmax)
+    val empty: SortedInfo = SortedInfo(true, Int.MaxValue, Int.MinValue)
+
   def ordered(ints: IndexedSeq[Int]): Boolean =
-    ???
+    foldMapV(ints, sortedInfoMonoid)(i => SortedInfo(true, i, i)).sorted
 
   enum WC:
     case Stub(chars: String)
@@ -129,7 +137,14 @@ object Monoid:
 
     val empty: WC = Stub("")
 
-  def count(s: String): Int = ???
+  def count(s: String): Int =
+    import WC.*
+    def toWC(c: Char): WC =
+      if c.isLetter then Stub(c.toString) else Part("", 0, "")
+    def countIfNonEmpty(s: String) = if s.isEmpty then 0 else 1
+    foldMapV(s, wcMonoid)(toWC) match
+      case Part(l, w, r) => countIfNonEmpty(l) + w + countIfNonEmpty(r)
+      case Stub(s) => countIfNonEmpty(s)
 
   given productMonoid[A, B](using ma: Monoid[A], mb: Monoid[B]): Monoid[(A, B)] with
     def combine(x: (A, B), y: (A, B)) = ???

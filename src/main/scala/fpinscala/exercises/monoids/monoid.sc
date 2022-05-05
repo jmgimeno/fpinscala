@@ -1,5 +1,5 @@
 import fpinscala.exercises.monoids.*
-import Monoid.*
+import Monoid.{*, given}
 
 val intOptionMonoid = optionMonoid[Int]
 intOptionMonoid.combine(None, Some(1))
@@ -13,3 +13,6 @@ dualIntOptionMonoid.combine(Some(2), Some(1))
 
 stringMonoid.combine("hola", "patata")
 dual(stringMonoid).combine("hola", "patata")
+
+
+foldMap(List("hola", "patata", "poma"), stringMonoid)(identity)
