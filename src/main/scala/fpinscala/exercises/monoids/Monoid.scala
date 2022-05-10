@@ -26,19 +26,19 @@ object Monoid:
 //    def combine(li1: List[String], li2: List[String]) = li1 ++ li2
 //    val empty = List.empty[String]
 
-  lazy val intAddition: Monoid[Int] = new:
+  val intAddition: Monoid[Int] = new:
     def combine(i1: Int, i2: Int): Int = i1 + i2
     val empty: Int = 0
 
-  lazy val intMultiplication: Monoid[Int] = new:
+  val intMultiplication: Monoid[Int] = new:
     def combine(i1: Int, i2: Int): Int = i1 * i2
     val empty: Int = 1
 
-  lazy val booleanOr: Monoid[Boolean] = new :
+  val booleanOr: Monoid[Boolean] = new :
     def combine(a1: Boolean, a2: Boolean): Boolean = a1 || a2
     val empty: Boolean = false
 
-  lazy val booleanAnd: Monoid[Boolean] = new:
+  val booleanAnd: Monoid[Boolean] = new:
     def combine(a1: Boolean, a2: Boolean): Boolean = a1 && a2
     val empty: Boolean = true
 
@@ -147,18 +147,37 @@ object Monoid:
       case Stub(s) => countIfNonEmpty(s)
 
   given productMonoid[A, B](using ma: Monoid[A], mb: Monoid[B]): Monoid[(A, B)] with
-    def combine(x: (A, B), y: (A, B)) = ???
-    val empty = ???
+    def combine(x: (A, B), y: (A, B)) : (A, B) =
+      val (a1, b1) = x
+      val (a2, b2) = y
+      (ma.combine(a1, a2), mb.combine(b1, b2))
+
+    val empty: (A, B) = (ma.empty, mb.empty)
 
   given functionMonoid[A, B](using mb: Monoid[B]): Monoid[A => B] with
-    def combine(f: A => B, g: A => B) = ???
-    val empty: A => B = a => ???
+    def combine(f: A => B, g: A => B): A => B =
+      a => mb.combine(f(a), g(a))
+    val empty: A => B = a => mb.empty
 
   given mapMergeMonoid[K, V](using mv: Monoid[V]): Monoid[Map[K, V]] with
-    def combine(a: Map[K, V], b: Map[K, V]) = ???
-    val empty = ???
+    def combine(a: Map[K, V], b: Map[K, V]): Map[K, V] =
+      (a.keySet ++ b.keySet).foldLeft(empty) { (acc,k) =>
+        acc.updated(k, mv.combine(a.getOrElse(k, mv.empty),
+          b.getOrElse(k, mv.empty)))
+      }
+    val empty: Map[K, V] = Map()
 
   def bag[A](as: IndexedSeq[A]): Map[A, Int] =
-    ???
+    val m = mapMergeMonoid[A, Int]
+    foldMapV(as, m)(a => Map(a -> 1))
+
+  def bag_2[A](as: IndexedSeq[A]): Map[A, Int] =
+    import Foldable.given
+    as.foldMap(a => Map(a -> 1))
+
+  // We'll need these given instances
+  given _intMonoid: Monoid[Int] = intAddition
+  given _listMonoid[A]: Monoid[List[A]] = listMonoid
 
 end Monoid
+

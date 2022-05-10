@@ -69,19 +69,32 @@ object Foldable:
 
   given Foldable[Tree] with
     import Tree.{Leaf, Branch}
-    extension [A](as: Tree[A])
+    extension [A](tree: Tree[A])
       override def foldRight[B](acc: B)(f: (A, B) => B) =
-        ???
+        tree match
+          case Leaf(a) => f(a, acc)
+          case Branch(l, r) => 
+            val firstTheRight = r.foldRight(acc)(f)
+            l.foldRight(firstTheRight)(f)
+          
       override def foldLeft[B](acc: B)(f: (B, A) => B) =
-        ???
+        tree match
+          case Leaf(a) => f(acc, a)
+          case Branch(l, r) =>
+            val firstTheLeft = l.foldLeft(acc)(f)
+            r.foldLeft(firstTheLeft)(f)
+          
       override def foldMap[B](f: A => B)(using mb: Monoid[B]): B =
-        ???
+        tree match
+          case Leaf(a) => f(a)
+          case Branch(l, r) => 
+            mb.combine(l.foldMap(f)(using mb), r.foldMap(f)(using mb))
 
   given Foldable[Option] with
     extension [A](as: Option[A])
-      override def foldRight[B](acc: B)(f: (A, B) => B) =
-        ???
-      override def foldLeft[B](acc: B)(f: (B, A) => B) =
-        ???
+      override def foldRight[B](acc: B)(f: (A, B) => B): B =
+        as.map(f(_, acc)).getOrElse(acc)
+      override def foldLeft[B](acc: B)(f: (B, A) => B): B =
+        as.map(f(acc, _)).getOrElse(acc)
       override def foldMap[B](f: A => B)(using mb: Monoid[B]): B =
-        ???
+        as.map(f).getOrElse(mb.empty)
