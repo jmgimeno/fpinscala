@@ -8,7 +8,7 @@ trait Foldable[F[_]]:
   // that is traversable.
 
   // NOTE: If we define foldMap via foldRight instead of
-  // via foldRight (which is usually more common), we have to
+  // via foldLeft (which is usually more common), we have to
   // use the dual monoids in the implementations of foldRight
   // and foldLeft.
 
@@ -26,7 +26,7 @@ trait Foldable[F[_]]:
       as.foldMap(identity)(using ma)
 
     def toList: List[A] =
-      foldMap(a => List(a))(using listMonoid)
+      as.foldRight(List.empty)(_ :: _)
 
 object Foldable:
 
