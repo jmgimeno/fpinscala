@@ -168,15 +168,11 @@ object Monoid:
     val empty: Map[K, V] = Map()
 
   def bag[A](as: IndexedSeq[A]): Map[A, Int] =
-    val m = mapMergeMonoid[A, Int]
+    val m = mapMergeMonoid[A, Int](using intAddition)
     foldMapV(as, m)(a => Map(a -> 1))
 
-  def bag_2[A](as: IndexedSeq[A]): Map[A, Int] =
-    import Foldable.given
-    as.foldMap(a => Map(a -> 1))
-
   // We'll need these given instances
-  given _intMonoid: Monoid[Int] = intAddition
+  //given _intMonoid: Monoid[Int] = intAddition
   given _listMonoid[A]: Monoid[List[A]] = listMonoid
 
 end Monoid

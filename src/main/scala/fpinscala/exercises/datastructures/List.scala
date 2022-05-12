@@ -121,7 +121,7 @@ object List: // `List` companion object. Contains functions for creating and wor
   // Cons(x1, Cons(x2,                                ))
   //                   Cons(y1, Cons(y2, Cons(y3, Nil)))
   def appendViaFoldRight[A](l: List[A], r: List[A]): List[A] =
-    foldRight(l, r, Cons)
+    foldRight(l, r, Cons.apply)
 
   // List(List(1, 2), List(2, 3, 4), List(5, 6, 7))
   // append(List(1, 2), append(List(2, 3, 4), append(List(5, 6, 7), Nil))

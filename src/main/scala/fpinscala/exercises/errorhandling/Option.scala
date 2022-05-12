@@ -28,7 +28,7 @@ enum Option[+A]:
     case oa => oa // as Option is covariant and B>:A then Option[B]>:Option[A] so we can return oa
 
   def orElse[B >: A](ob: => Option[B]): Option[B] =
-    this.map(Some).getOrElse(ob)
+    this.map(Some.apply).getOrElse(ob)
 
   // oa is a variable that is bound to the Some(a) value
   // and we can use it in the right-hand side to refer to
