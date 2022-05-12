@@ -37,6 +37,10 @@ object RNG:
     val f = i / (Int.MaxValue.toDouble + 1)
     (f, rng2)
 
+  def boolean(rng: RNG): (Boolean, RNG) =
+    rng.nextInt match
+      case (i,rng2) => (i%2==0,rng2)
+
   def intDouble(rng: RNG): ((Int, Double), RNG) =
     val (i, rng2) = rng.nextInt
     val (h, rng3) = double(rng2)

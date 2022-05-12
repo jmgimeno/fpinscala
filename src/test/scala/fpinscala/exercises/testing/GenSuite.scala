@@ -26,7 +26,7 @@ object Gen:
 */
 
 // Gen tests:
-/*
+
   test("Exercise 8.4")(ExhGen.int ** ExhGen.int ** genRNG) { case n ** m ** rng =>
     val (start, stopExclusive) = if n < m then (n, m) else (m, n)
     val (k, _) = Gen.choose(start, stopExclusive).next(rng)
@@ -91,7 +91,7 @@ object Gen:
     assert(unionList3.count(_ == n) >= shortSample / 5, "g2 is twice as common as g1")
     assert(unionList3.count(_ == m) >= shortSample / 2, "g2 is twice as common as g1")
   }
-*/
+
 
 
 // Prop tests: Before using these tests (starting from Exercise 8.9),
@@ -108,7 +108,7 @@ object Prop:
 */
 
 // Prop tests
-/*
+
   import fpinscala.exercises.testing.Prop.Result.*
 
   private val propPassed = Prop((n, rng) => Passed)
@@ -126,7 +126,7 @@ object Prop:
     assertEquals((propFalsified || propPassed).check(), Passed)
     assert((propFalsified || propFalsified).check().isFalsified)
   }
-*/
+
 
 
 // SGen tests: Before using these tests (starting from Exercise 8.10),
@@ -140,7 +140,7 @@ object SGen:
 */
 
 // SGen tests
-/*
+
   test("Exercises 8.10 + 8.11")(ExhGen.int ** genRNG) { case n ** rng0 =>
     val sGenA = SGen(Gen.unit(_))
     def aToB(a: Int) = a % 2 == 0
@@ -161,4 +161,4 @@ object SGen:
     val (randomNonEmptyList, _) = Gen.boolean.nonEmptyList(n).next(rng)
     assert(randomNonEmptyList.nonEmpty)
   }
-*/
+
