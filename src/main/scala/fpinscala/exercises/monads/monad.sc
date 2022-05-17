@@ -42,4 +42,22 @@ monadList.filterM(List(1, 3))(evenOddCombined)
 
 monadList.filterM(List(1,2,3))(_ => List(true, false))
 
+import fpinscala.exercises.monads.Id
 
+val resId =
+  for {
+    a <- Id(12)
+    b <- Id(4)
+  } yield a + b
+
+val resOption =
+  for {
+    a <- Some(12)
+    b <- None: Option[Int]
+  } yield a + b
+
+val resList =
+  for {
+    a <- List(12, 34)
+    b <- List(4)
+  } yield a + b
