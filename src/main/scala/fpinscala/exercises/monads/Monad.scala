@@ -134,11 +134,19 @@ object Id:
 opaque type Reader[-R, +A] = R => A
 
 object Reader:
+
+  def apply[R, A](f: R => A): Reader[R, A] = f
+
   extension [R, A](ra: Reader[R, A])
     def run(r: R): A = ra(r)
 
   given readerMonad[R]: Monad[Reader[R, _]] with
-    def unit[A](a: => A): Reader[R, A] = ???
-    extension [A](fa: Reader[R, A])
-      override def flatMap[B](f: A => Reader[R, B]) =
-        ???
+    def unit[A](a: => A): Reader[R, A] = _ => a
+    extension [A](fa: Reader[R, A]) // R => A        // R => B
+      override def flatMap[B](f: A => Reader[R, B]): Reader[R, B] =
+                              // A => R => B
+        (r: R) =>
+          val a: A = fa(r)
+          val g: R => B = f(a)
+          val b: B = g(r)
+          b
