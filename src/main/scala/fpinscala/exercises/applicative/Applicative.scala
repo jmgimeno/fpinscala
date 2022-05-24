@@ -49,7 +49,10 @@ trait Applicative[F[_]] extends Functor[F]:
       fb: F[B],
       fc: F[C]
     )(f: (A, B, C) => D): F[D] =
-      ???
+      val fabcd: F[A => B => C => D] = unit(f.curried)
+      val fbcd: F[B => C => D] = apply(fabcd)(fa)
+      val fcd: F[C => D] = apply(fbcd)(fb)
+      apply(fcd)(fc)
 
     def map4[B, C, D, E](
       fb: F[B],
@@ -59,7 +62,13 @@ trait Applicative[F[_]] extends Functor[F]:
       ???
 
   def product[G[_]](G: Applicative[G]): Applicative[[x] =>> (F[x], G[x])] =
-    ???
+    new:
+      def unit[A](a: => A): (F[A], G[A]) =
+        (self.unit(a), G.unit(a))
+      extension [A](fga: (F[A], G[A]))
+        override def map2[B,C](fgb: (F[B], G[B]))(f: (A, B) => C): (F[C], G[C]) =
+          (fga, fgb) match
+            case ((fa, ga), (fb, gb)) => (self.map2(fa)(fb)(f), G.map2(ga)(gb)(f))
 
   def compose[G[_]](G: Applicative[G]): Applicative[[x] =>> F[G[x]]] =
     ???
@@ -85,15 +94,20 @@ object Applicative:
           fab.map(f.tupled)
 
   enum Validated[+E, +A]:
-    case Valid(get: A) extends Validated[Nothing, A]
-    case Invalid(error: E) extends Validated[E, Nothing]
+    case Valid(get: A) //extends Validated[Nothing, A]
+    case Invalid(error: E) //extends Validated[E, Nothing]
   
   object Validated:
     given validatedApplicative[E: Monoid]: Applicative[Validated[E, _]] with
-      def unit[A](a: => A) = ???
+    //given validatedApplicative[E](using Monoid[E]): Applicative[Validated[E, _]] with
+      def unit[A](a: => A) = Valid(a)
       extension [A](fa: Validated[E, A])
-        override def map2[B, C](fb: Validated[E, B])(f: (A, B) => C) =
-          ???
+        override def map2[B, C](fb: Validated[E, B])(f: (A, B) => C): Validated[E, C] =
+          (fa, fb) match
+            case (Valid(a), Valid(b)) => Valid(f(a, b))
+            case (Valid(_), Invalid(e)) => Invalid(e)
+            case (Invalid(e), Valid(_)) => Invalid(e)
+            case (Invalid(e1), Invalid(e2)) => Invalid(summon[Monoid[E]].combine(e1, e2))
 
   type Const[A, B] = A
 
