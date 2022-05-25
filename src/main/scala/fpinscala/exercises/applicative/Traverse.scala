@@ -1,8 +1,8 @@
 package fpinscala.exercises.applicative
 
-import fpinscala.answers.monads.Functor
+import fpinscala.answers.monads.{Functor, Id}
 import fpinscala.answers.state.State
-import fpinscala.answers.monoids.{Monoid, Foldable}
+import fpinscala.answers.monoids.{Foldable, Monoid}
 import Applicative.Const
 
 trait Traverse[F[_]] extends Functor[F], Foldable[F]:
@@ -18,7 +18,12 @@ trait Traverse[F[_]] extends Functor[F], Foldable[F]:
 
   extension [A](fa: F[A])
     def map[B](f: A => B): F[B] =
-      ???
+      given Applicative[Id] with
+        def unit[A](a: => A): Id[A] = Id(a)
+        extension [A](ia: Id[A])
+          override def map2[B, C](ib: Id[B])(f: (A, B) => C): Id[C] =
+            Id(f(ia.value, ib.value))
+      fa.traverse(a => Id(f(a))).value
 
     override def foldMap[B](f: A => B)(using mb: Monoid[B]): B =
       fa.traverse[Const[B, _], Nothing](f)
@@ -58,12 +63,14 @@ object Traverse:
   given listTraverse: Traverse[List] with
     extension [A](as: List[A])
       override def traverse[G[_]: Applicative, B](f: A => G[B]): G[List[B]] =
-        ???
+        val G = summon[Applicative[G]]
+        as.foldRight(G.unit(List.empty[B]))((a, acc) => G.map2(f(a))(acc)(_ :: _))
 
   given optionTraverse: Traverse[Option] with
     extension [A](oa: Option[A])
       override def traverse[G[_]: Applicative, B](f: A => G[B]): G[Option[B]] =
-        ???
+        val G = summon[Applicative[G]]
+        oa.fold(G.unit(Option.empty[B]))(a => f(a).map(Some.apply))
 
   given treeTraverse: Traverse[Tree] = new:
     extension [A](ta: Tree[A])
