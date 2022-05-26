@@ -26,11 +26,15 @@ trait Monad[F[_]] extends Applicative[F]:
 
 object Monad:
   def composeM[G[_], H[_]](using G: Monad[G], H: Monad[H], T: Traverse[H]): Monad[[x] =>> G[H[x]]] = new:
-    def unit[A](a: => A): G[H[A]] = ???
+    def unit[A](a: => A): G[H[A]] = G.unit(H.unit(a))
     extension [A](gha: G[H[A]])
       override def flatMap[B](f: A => G[H[B]]): G[H[B]] =
-        ???
-
+        val ghghb: G[H[G[H[B]]]] = G.map(gha)(ha => H.map(ha)(f))
+        val gghhb: G[G[H[H[B]]]] = G.map(ghghb)(hghb => T.traverse(hghb)(ghb => ghb))
+        val ghhb: G[H[H[B]]] = G.join(gghhb)
+        val ghb: G[H[B]] = G.map(ghhb)(hhb => H.join(hhb))
+        ghb
+  
   given eitherMonad[E]: Monad[Either[E, _]] with
     def unit[A](a: => A): Either[E, A] = Right(a)
     extension [A](fa: Either[E, A])

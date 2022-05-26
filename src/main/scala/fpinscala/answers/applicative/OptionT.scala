@@ -13,5 +13,5 @@ object OptionT:
       override def flatMap[B](f: A => OptionT[F, B]): OptionT[F, B] =
         F.flatMap(fa) {
           case None => F.unit(None)
-          case Some(a) => f(a).value
+          case Some(a) => f(a)
         }
