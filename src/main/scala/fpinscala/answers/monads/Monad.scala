@@ -56,6 +56,7 @@ trait Monad[F[_]] extends Functor[F]:
 
   extension [A](fa: F[A])
     def flatMapViaCompose[B](f: A => F[B]): F[B] =
+      //compose(identity[F[A]], f)(fa)
       compose(_ => fa, f)(())
 
   def filterM[A](as: List[A])(f: A => F[Boolean]): F[List[A]] =
