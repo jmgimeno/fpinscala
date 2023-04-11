@@ -42,7 +42,15 @@ val longNew = cons(f(1), cons(f(2), cons(f(3), cons(f(4), cons(f(5), empty)))))
 // description
 val result = longNew.drop(2).take(2)
 
-// avaluation
+// evaluation
 result.toList.length
 
 LazyList.fibsViaUnfold.take(10).toList
+
+// Primer parcial 2023 problema 5
+
+val facts = LazyList.unfold((0, 1)) { case (n, f) =>
+  Some((f, (n + 1, (n + 1) * f)))
+}
+
+facts.take(10).toList

@@ -44,7 +44,7 @@ object RNG:
     (pos / (Int.MaxValue.toDouble + 1.0), rng2)
 
   def intDouble(rng: RNG): ((Int, Double), RNG) =
-    val (i, rng2) = rng.nextInt
+    val (i, rng2) = int(rng)
     val (d, rng3) = double(rng2)
     ((i, d), rng3)
 
@@ -58,12 +58,14 @@ object RNG:
     val (d3, rng4) = double(rng3)
     ((d, d2, d3), rng4)
 
+  // To generate the random elements in the same order as in the
+  // figure on slide 5
   def ints(count: Int)(rng: RNG): (List[Int], RNG) =
     if count == 0
     then (List.empty, rng)
     else
-      val (is, rng2) = ints(count - 1)(rng)
-      val (i, rng3) = rng2.nextInt
+      val (i, rng2) = int(rng)
+      val (is, rng3) = ints(count - 1)(rng2)
       (i :: is, rng3)
 
   def intsTR(count: Int)(rng: RNG): (List[Int], RNG) =
@@ -73,7 +75,17 @@ object RNG:
       else
         val (i, rng2) = rng.nextInt
         go(count - 1, i :: is, rng2)
-    go(count, List.empty, rng)
+    val (l, rngEnd) = go(count, List.empty, rng)
+    (l.reverse, rngEnd)
+
+  def list(count: Int): Rand[List[Int]] =
+    rng =>
+      if count == 0
+      then (List.empty, rng)
+      else
+        val (i, rng2) = int(rng)
+        val (is, rng3) = ints(count - 1)(rng2)
+        (i :: is, rng3)
 
   def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
 
