@@ -9,6 +9,7 @@ object RNG:
 
   case class Simple(seed: Long) extends RNG:
     def nextInt: (Int, RNG) =
+      println("Generació")
       val newSeed =
         (seed * 0x5deece66dL + 0xbL) & 0xffffffffffffL // `&` is bitwise AND. We use the current seed to generate a new seed.
       val nextRNG = Simple(
@@ -78,18 +79,46 @@ object RNG:
     val (l, rngEnd) = go(count, List.empty, rng)
     (l.reverse, rngEnd)
 
-  def list(count: Int): Rand[List[Int]] =
+    // RNG => (C, RNG)
+  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
     rng =>
-      if count == 0
-      then (List.empty, rng)
-      else
-        val (i, rng2) = int(rng)
-        val (is, rng3) = ints(count - 1)(rng2)
-        (i :: is, rng3)
+      val (a, rng2) = ra(rng)
+      val (b, rng3) = rb(rng2)
+      (f(a, b), rng3)
 
-  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
+  //                                      RNG => (List[A], RNG)
+  def list[A](rand: Rand[A])(count: Int): Rand[List[A]] =
+    println("Configuració")
+    if count == 0
+    then unit(List.empty)
+    else map2(rand, list(rand)(count - 1))(_ :: _)
 
-  def sequence[A](rs: List[Rand[A]]): Rand[List[A]] = ???
+  def both[A, B](ra: Rand[A], rb: Rand[B]): Rand[(A, B)] =
+    map2(ra, rb)((_, _))
+
+  val randIntDouble: Rand[(Int, Double)] =
+    // Rand[Int] Rand[Double]
+    both(int, double)
+
+  val randDoubleInt: Rand[(Double, Int)] =
+    both(double, int)
+
+  def sequence[A](rs: List[Rand[A]]): Rand[List[A]] =
+    rs match
+      // head: Rand[A]
+      // next: List[Rand[A]]
+      // sequence(next): Rand[List[A]]
+      // ???: Rand[List[A]]
+      case head :: next => map2(head, sequence(next))(_ :: _)
+      case Nil          => unit(Nil: List[A])
+
+  def sequenceViaFoldRight[A](rs: List[Rand[A]]): Rand[List[A]] =
+    rs.foldRight(unit(List.empty[A])) { (ra, ras) =>
+      map2(ra, ras)(_ :: _)
+    }
+
+  def intsViaSequence[A](rand: Rand[A])(count: Int): Rand[List[A]] =
+    sequence(List.fill(count)(rand))
 
   def flatMap[A, B](r: Rand[A])(f: A => Rand[B]): Rand[B] = ???
 
