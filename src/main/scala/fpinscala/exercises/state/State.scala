@@ -29,11 +29,11 @@ object RNG:
   def unit[A](a: A): Rand[A] =
     rng => (a, rng)
 
+  //                                  : RNG => (B, RNG)
   def map[A, B](s: Rand[A])(f: A => B): Rand[B] =
-    rng => {
+    rng =>
       val (a, rng2) = s(rng)
       (f(a), rng2)
-    }
 
   def nonNegativeInt(rng: RNG): (Int, RNG) =
     val (current, nextRng) = rng.nextInt
@@ -79,7 +79,7 @@ object RNG:
     val (l, rngEnd) = go(count, List.empty, rng)
     (l.reverse, rngEnd)
 
-    // RNG => (C, RNG)
+  //                                                           RNG => (C, RNG)
   def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
     rng =>
       val (a, rng2) = ra(rng)
@@ -112,6 +112,11 @@ object RNG:
       case head :: next => map2(head, sequence(next))(_ :: _)
       case Nil          => unit(Nil: List[A])
 
+  /*
+  def sequence2[A](as: List[Option[A]]): Option[List[A]] =
+    as.foldRight(Some(List.empty[A])) { (oa, acc) =>
+      map2(oa, acc)(_ :: _)
+   */
   def sequenceViaFoldRight[A](rs: List[Rand[A]]): Rand[List[A]] =
     rs.foldRight(unit(List.empty[A])) { (ra, ras) =>
       map2(ra, ras)(_ :: _)
@@ -120,7 +125,30 @@ object RNG:
   def intsViaSequence[A](rand: Rand[A])(count: Int): Rand[List[A]] =
     sequence(List.fill(count)(rand))
 
-  def flatMap[A, B](r: Rand[A])(f: A => Rand[B]): Rand[B] = ???
+  //                                              RNG => (B, RNG)
+  def flatMap[A, B](ra: Rand[A])(f: A => Rand[B]): Rand[B] =
+    rng =>
+      val (a, rng2) = ra(rng)
+      val rb = f(a)
+      rb(rng2)
+
+  /*
+  def nonNegativeLessThan(n: Int): Rand[Int] =
+    map(nonNegativeInt) { i =>
+      val mod = i % n
+      if i + (n-1) - mod >= 0
+      then mod
+      else nonNegativeLessThan(n)(???)
+    }
+   */
+
+  def nonNegativeLessThan(n: Int): Rand[Int] =
+    flatMap(nonNegativeInt) { i =>
+      val mod = i % n
+      if i + (n - 1) - mod >= 0
+      then unit(mod)
+      else nonNegativeLessThan(n)
+    }
 
   def mapViaFlatMap[A, B](r: Rand[A])(f: A => B): Rand[B] = ???
 
@@ -144,6 +172,18 @@ object State:
       ???
 
   def apply[S, A](f: S => (A, S)): State[S, A] = f
+
+  // unit, sequence, traverse
+
+  def get[S]: State[S, S] = s => (s, s)
+
+  def set[S](s: S): State[S, Unit] = _ => ((), s)
+
+  def modify[S](f: S => S): State[S, Unit] =
+    for
+      s <- get
+      _ <- set(f(s))
+    yield ()
 
 enum Input:
   case Coin, Turn
