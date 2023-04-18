@@ -138,7 +138,7 @@ object RNG:
       val mod = i % n
       if i + (n-1) - mod >= 0
       then mod
-      else nonNegativeLessThan(n)(???)
+      else nonNegativeLessThan(n)(???) <- impossible => we need another combinator
     }
    */
 
@@ -150,11 +150,20 @@ object RNG:
       else nonNegativeLessThan(n)
     }
 
-  def mapViaFlatMap[A, B](r: Rand[A])(f: A => B): Rand[B] = ???
+  def mapViaFlatMap[A, B](r: Rand[A])(f: A => B): Rand[B] =
+    flatMap(r) { a =>
+      // Rand[B]
+      unit(f(a))
+    }
 
   def map2ViaFlatMap[A, B, C](ra: Rand[A], rb: Rand[B])(
       f: (A, B) => C
-  ): Rand[C] = ???
+  ): Rand[C] =
+    flatMap(ra) { a =>
+      flatMap(rb) { b =>
+        unit(f(a, b))
+      }
+    }
 
 opaque type State[S, +A] = S => (A, S)
 
@@ -162,18 +171,48 @@ object State:
   extension [S, A](underlying: State[S, A])
     def run(s: S): (A, S) = underlying(s)
 
+    // underlying: State[S, A]: S => (A, S)
+    //                     S => (B, S)
     def map[B](f: A => B): State[S, B] =
-      ???
+      (s: S) =>
+        val (a, s2) = underlying(s)
+        (f(a), s2)
 
+    // underlying: State[S, A]: S => (A, S)
+    //             sb: S => (B, S)
+    //                                               S => (C, S)
     def map2[B, C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
-      ???
+      (s: S) =>
+        val (a, s2) = underlying(s)
+        val (b, s3) = sb(s2)
+        (f(a, b), s3)
 
+    //                                   S => (B, S)
     def flatMap[B](f: A => State[S, B]): State[S, B] =
-      ???
+      (s: S) =>
+        val (a, s2) = underlying(s)
+        f(a)(s2)
 
   def apply[S, A](f: S => (A, S)): State[S, A] = f
 
   // unit, sequence, traverse
+
+  //                    S => (A, S)
+  def unit[S, A](a: A): State[S, A] = s => (a, s)
+
+  def sequence[S, A](rs: List[State[S, A]]): State[S, List[A]] =
+    rs match
+      case head :: next =>
+        // head: State[S, A]
+        // next: List[State[S, A]]
+        // ???: State[S, List[A]]
+        head.map2(sequence(next))(_ :: _)
+      case Nil => unit(Nil: List[A])
+
+  def traverse[S, A, B](rs: List[A])(f: A => State[S, B]): State[S, List[B]] =
+    rs.foldRight(unit(Nil: List[B])) { (a, stateListB) =>
+      f(a).map2(stateListB)(_ :: _)
+    }
 
   def get[S]: State[S, S] = s => (s, s)
 
@@ -192,3 +231,5 @@ case class Machine(locked: Boolean, candies: Int, coins: Int)
 
 object Candy:
   def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = ???
+
+  def update(i: Input): Machine => Machine = ???
