@@ -193,6 +193,9 @@ object State:
         val (a, s2) = underlying(s)
         f(a)(s2)
 
+    def *>[B](andThen: State[S, B]): State[S, B] =
+      flatMap(_ => andThen)
+
   def apply[S, A](f: S => (A, S)): State[S, A] = f
 
   // unit, sequence, traverse
@@ -227,9 +230,27 @@ object State:
 enum Input:
   case Coin, Turn
 
-case class Machine(locked: Boolean, candies: Int, coins: Int)
+case class Machine(locked: Boolean, melonGums: Int, coins: Int)
+
+/*
+- Inserting a coin into a locked machine will cause it to unlock if there’s any candy left.
+- Turning the knob on an unlocked machine will cause it to dispense candy and become locked.
+- Turning the knob on a locked machine or inserting a coin into an unlocked machine does nothing.
+- A machine that’s out of candy ignores all inputs.
+ */
 
 object Candy:
-  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = ???
+  import Input.*
+  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] =
+    for
+      _ <- State.traverse(inputs)(i => State.modify(update(i)))
+      m <- State.get
+    yield (m.melonGums, m.coins)
 
-  def update(i: Input): Machine => Machine = ???
+  def update(i: Input)(m: Machine): Machine =
+    (i, m) match
+      case (Coin, Machine(true, melonGums, coins)) if melonGums > 0 =>
+        Machine(false, melonGums, coins + 1)
+      case (Turn, Machine(false, melonGums, coins)) if melonGums > 0 =>
+        Machine(true, melonGums - 1, coins)
+      case _ => m
