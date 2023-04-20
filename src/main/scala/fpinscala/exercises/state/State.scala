@@ -230,7 +230,7 @@ object State:
 enum Input:
   case Coin, Turn
 
-case class Machine(locked: Boolean, melonGums: Int, coins: Int)
+case class Machine(locked: Boolean, candies: Int, coins: Int)
 
 /*
 - Inserting a coin into a locked machine will cause it to unlock if there’s any candy left.
@@ -245,7 +245,7 @@ object Candy:
     for
       _ <- State.traverse(inputs)(i => State.modify(update(i)))
       m <- State.get
-    yield (m.melonGums, m.coins)
+    yield (m.candies, m.coins)
 
   def update(i: Input)(m: Machine): Machine =
     (i, m) match
