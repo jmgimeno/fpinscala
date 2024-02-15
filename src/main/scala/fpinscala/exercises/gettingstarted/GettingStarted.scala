@@ -12,24 +12,46 @@ object MyProgram:
     val msg = "The absolute value of %d is %d"
     msg.format(x, abs(x))
 
+  // Per a veure la màgia darrera de @main podeu
+  // consultar https://docs.scala-lang.org/scala3/book/methods-main-methods.html
+
   @main def printAbs: Unit =
     println(formatAbs(-42))
 
+  // Si definim el main així (esborrant l'anterior)
+  // el plugin ho detecta, pero el run | debug apareix
+  // a sobre de l'objecte
+
+  // def main(args: Array[String]): Unit =
+  //   println("patata")
+
   // A definition of factorial, using a local, tail recursive function
+  // - transparència referencial
+  // - no usa pila (espai constant)
   def factorial(n: Int): Int =
     @annotation.tailrec
-    def go(n: Int, acc: Int): Int =
-      if n <= 0 then acc
-      else go(n-1, n*acc)
+    def go(i: Int, acc: Int): Int = // n! * acc
+      if i > 0 then go(i - 1, i * acc)
+      else acc
 
     go(n, 1)
 
   // Another implementation of `factorial`, this time with a `while` loop
-  def factorial2(n: Int): Int =
+  // - no transparència referencial (de la implementació)
+  // - no usa pila (espai constant)
+  def factorialIter(n: Int): Int =
     var acc = 1
     var i = n
-    while i > 0 do { acc *= i; i -= 1 }
+    while i > 0 do
+      acc = acc * i
+      i = i - 1
     acc
+
+  // - transparència referencial
+  // - usa pila (espai lineal => pot llençar StackOverflowError)
+  def factorialRec(n: Int): Int =
+    if n == 0 then 1
+    else n * factorialRec(n - 1)
 
   // Exercise 1: Write a function to compute the nth fibonacci number
 
@@ -63,7 +85,17 @@ object TestFib:
   // test implementation of `fib`
   @main def printFib: Unit =
     println("Expected: 0, 1, 1, 2, 3, 5, 8")
-    println("Actual:   %d, %d, %d, %d, %d, %d, %d".format(fib(0), fib(1), fib(2), fib(3), fib(4), fib(5), fib(6)))
+    println(
+      "Actual:   %d, %d, %d, %d, %d, %d, %d".format(
+        fib(0),
+        fib(1),
+        fib(2),
+        fib(3),
+        fib(4),
+        fib(5),
+        fib(6)
+      )
+    )
 
 // Functions get passed around so often in FP that it's
 // convenient to have syntax for constructing a function
@@ -83,7 +115,6 @@ object AnonymousFunctions:
     println(formatResult("increment5", 7, x => { val r = x + 1; r }))
 
 object MonomorphicBinarySearch:
-
 
   // First, a findFirst, specialized to `String`.
   // Ideally, we could generalize this to work for any `Array` type.
@@ -126,20 +157,20 @@ object PolymorphicFunctions:
   // Polymorphic functions are often so constrained by their type
   // that they only have one implementation! Here's an example:
 
-  def partial1[A,B,C](a: A, f: (A, B) => C): B => C =
+  def partial1[A, B, C](a: A, f: (A, B) => C): B => C =
     (b: B) => f(a, b)
 
   // Exercise 3: Implement `curry`.
 
   // Note that `=>` associates to the right, so we could
   // write the return type as `A => B => C`
-  def curry[A,B,C](f: (A, B) => C): A => (B => C) =
+  def curry[A, B, C](f: (A, B) => C): A => (B => C) =
     ???
 
   // NB: The `Function2` trait has a `curried` method already
 
   // Exercise 4: Implement `uncurry`
-  def uncurry[A,B,C](f: A => B => C): (A, B) => C =
+  def uncurry[A, B, C](f: A => B => C): (A, B) => C =
     ???
 
   /*
@@ -150,10 +181,9 @@ object PolymorphicFunctions:
   and uncurry and the two forms are in some sense "the same". In FP jargon,
   we say that they are _isomorphic_ ("iso" = same; "morphe" = shape, form),
   a term we inherit from category theory.
-  */
+   */
 
   // Exercise 5: Implement `compose`
 
-  def compose[A,B,C](f: B => C, g: A => B): A => C =
+  def compose[A, B, C](f: B => C, g: A => B): A => C =
     ???
-
