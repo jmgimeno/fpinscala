@@ -9,9 +9,13 @@ name: Continuous Integration
 
 on:
   pull_request:
-    branches: ['**']
+    branches: 
+      - first-edition
+      - second-edition
   push:
-    branches: ['**']
+    branches:
+      - first-edition
+      - second-edition
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
