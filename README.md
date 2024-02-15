@@ -1,4 +1,4 @@
-[![Join the chat at https://gitter.im/fpinscala/fpinscala](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fpinscala/fpinscala?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 
+[![Join the chat at https://gitter.im/fpinscala/fpinscala](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fpinscala/fpinscala?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This repository contains exercises, hints, and answers for the book
 [Functional Programming in Scala](http://manning.com/bjarnason/). Along
@@ -6,8 +6,9 @@ with the book itself, it's the closest you'll get to having your own
 private functional programming tutor without actually having one.
 
 There are two main branches in this repository:
- - [first-edition](https://github.com/fpinscala/fpinscala/tree/first-edition)
- - [second-edition](https://github.com/fpinscala/fpinscala/tree/second-edition)
+
+- [first-edition](https://github.com/fpinscala/fpinscala/tree/first-edition)
+- [second-edition](https://github.com/fpinscala/fpinscala/tree/second-edition)
 
 Be sure to select the branch which matches the edition of the book you are reading!
 
@@ -38,20 +39,20 @@ working through the book.
 
 Chapter descriptions:
 
-* Chapter 2: gettingstarted
-* Chapter 3: datastructures
-* Chapter 4: errorhandling
-* Chapter 5: laziness
-* Chapter 6: state
-* Chapter 7: parallelism
-* Chapter 8: testing
-* Chapter 9: parsing
-* Chapter 10: monoids
-* Chapter 11: monads
-* Chapter 12: applicative
-* Chapter 13: iomonad
-* Chapter 14: localeffects
-* Chapter 15: streamingio
+- Chapter 2: gettingstarted
+- Chapter 3: datastructures
+- Chapter 4: errorhandling
+- Chapter 5: laziness
+- Chapter 6: state
+- Chapter 7: parallelism
+- Chapter 8: testing
+- Chapter 9: parsing
+- Chapter 10: monoids
+- Chapter 11: monads
+- Chapter 12: applicative
+- Chapter 13: iomonad
+- Chapter 14: localeffects
+- Chapter 15: streamingio
 
 ### Setup build environment
 
@@ -63,11 +64,11 @@ You'll also likely want an editor that's aware of Scala syntax. [VSCode](https:/
 
 To build the code for the first time, from the root directory of the project (i.e., the directory where this README.md is located):
 
-    $ scala-cli compile .
+    scala-cli compile .
 
 This compiles all exercises and answers. You can also do:
 
-    $ scala-cli console .
+    scala-cli console .
 
 to get a Scala REPL (prompt `scala>`) with access to exercises and answers, and then for example:
 
@@ -77,30 +78,30 @@ to import the `List` data type.
 
 To run the sample programs:
 
-    $ scala-cli run .
+    scala-cli run .
 
 This gives a list of possible main methods to execute. To run one of them:
 
-    $ scala-cli run . --main-class fpinscala.answers.gettingstarted.printAbs
+    scala-cli run . --main-class fpinscala.answers.gettingstarted.printAbs
 
 To run a single unit-test, you can specify the fully qualified class name and test name:
 
-    $ scala-cli test . -- 'fpinscala.exercises.gettingstarted.GettingStartedSuite.MyProgram.factorial'
+    scala-cli test . -- 'fpinscala.exercises.gettingstarted.GettingStartedSuite.MyProgram.factorial'
 
 To run unit-tests for a package you can do:
 
-    $ scala-cli test . -- 'fpinscala.exercises.gettingstarted.*'
+    scala-cli test . -- 'fpinscala.exercises.gettingstarted.*'
 
 To run all unit-tests:
 
-    $ scala-cli test .
+    scala-cli test .
 
 Note, running all tests will result in failures. As you solve exercises, the tests
 will start to pass.
 
 ### SBT
 
-Note: an [SBT](https://www.scala-sbt.org) build is also provided.
+Note: although the upstream repo provides an [SBT](https://www.scala-sbt.org) build, this support has been removed in this branch.
 
 ### License
 
@@ -113,4 +114,3 @@ wiki](https://github.com/fpinscala/fpinscala/wiki) for the **chapter
 notes**, links to more reading, and more.
 
 _Paul, Rúnar, and Michael_
-
