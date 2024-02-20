@@ -1,5 +1,7 @@
 package fpinscala.exercises.gettingstarted
 
+import fpinscala.answers.streamingio.EffectfulPulls.Pull.done
+
 // A comment!
 /* Another comment */
 /** A documentation comment */
@@ -15,8 +17,8 @@ object MyProgram:
   // Per a veure la màgia darrera de @main podeu
   // consultar https://docs.scala-lang.org/scala3/book/methods-main-methods.html
 
-  @main def printAbs: Unit =
-    println(formatAbs(-42))
+  // @main def printAbs: Unit =
+  //   println(formatAbs(-42))
 
   // Si definim el main així (esborrant l'anterior)
   // el plugin ho detecta, pero el run | debug apareix
@@ -55,7 +57,54 @@ object MyProgram:
 
   // Exercise 1: Write a function to compute the nth fibonacci number
 
-  def fib(n: Int): Int = ???
+  def fib(n: Int) = fibRecFinal(n)
+
+  // 0 1 0+1=1 1+1=2 1+2=3 2+3=5 3+5=8 ...
+  // f(0) = 0
+  // f(1) = 1
+  // f(2) = f(1) + f(0) = 1
+
+  def fibIter(n: Int): Int =
+    var current = 0
+    var next = 1
+    var i = n
+    while i > 0 do
+      val tmp = current
+      current = next
+      next = tmp + next
+      i -= 1
+    current
+
+  def fibRec(n: Int): Int =
+    if n == 0 then 0
+    else if n == 1 then 1
+    else fibRec(n - 1) + fibRec(n - 2)
+
+  def fibRecFinal(n: Int): Int =
+    @annotation.tailrec
+    def loop(i: Int, current: Int, next: Int): Int =
+      if i == 0 then current
+      else loop(i - 1, next, current + next)
+    loop(n, 0, 1)
+
+  // Transparència referencial
+  // fibRecFinal(4)
+  // loop(4, 0, 1)
+  // loop(3, 1, 1)
+  // loop(2, 1, 2)
+  // loop(1, 2, 3)
+  // loop(0, 3, 5)
+  // 3
+
+  // Transparència referencial
+  // fibRec(4)
+  // fibRec(3) + fibRec(2)
+  // fibRec(2) + fibRec(1) + fibRec(2)
+  // fibRec(1) + fibRec(0) + fibRec(1) + fibRec(2)
+  // 1 + 0 + 1 + fibRec(2)
+  // 2 + fibRec(1) + fibRec(0)
+  // 2 + 1 + 0
+  // 3
 
   // This definition and `formatAbs` are very similar..
   private def formatFactorial(n: Int) =
@@ -114,7 +163,7 @@ object AnonymousFunctions:
     println(formatResult("increment4", 7, _ + 1))
     println(formatResult("increment5", 7, x => { val r = x + 1; r }))
 
-object MonomorphicBinarySearch:
+object MonomorphicLinearSearch:
 
   // First, a findFirst, specialized to `String`.
   // Ideally, we could generalize this to work for any `Array` type.
@@ -134,6 +183,20 @@ object MonomorphicBinarySearch:
 
 object PolymorphicFunctions:
 
+  def findFirst[A](ss: Array[A], key: A): Int =
+    @annotation.tailrec
+    def loop(n: Int): Int =
+      // If `n` is past the end of the array, return `-1`
+      // indicating the key doesn't exist in the array.
+      if n >= ss.length then -1
+      // `ss(n)` extracts the n'th element of the array `ss`.
+      // If the element at `n` is equal to the key, return `n`
+      // indicating that the element appears in the array at that index.
+      else if ss(n) == key then n
+      else loop(n + 1) // Otherwise increment `n` and keep looking.
+    // Start the loop at the first element of the array.
+    loop(0)
+
   // Here's a polymorphic version of `findFirst`, parameterized on
   // a function for testing whether an `A` is the element we want to find.
   // Instead of hard-coding `String`, we take a type `A` as a parameter.
@@ -150,9 +213,62 @@ object PolymorphicFunctions:
 
     loop(0)
 
+  /*
+  val names = Array("pear", "apple, "potato", "banana")
+  var pos = findFirst(names, "potato") // 2
+
+  val pos2 = findFirst(name, n => n == "potato")
+
+  findFirst(names, n => n == "potato")
+
+  as = Array("pear", "apple, "potato", "banana")
+  as.length = 4
+  p  = n => n == "potato"
+
+  loop(0)  // n == 0
+
+  p(as(n))
+  p(as(0))
+  p("pear")
+  "pear" == "potato"
+  false
+
+  loop(1)
+
+  p(as(n))
+  p(as(1))
+  p("apple")
+  "apple" == "potato"
+  false
+
+  loop(2)
+
+  p(as(n))
+  p(as(2))
+  p("potato")
+  "potato" == "potato"
+  true
+
+  2
+   */
+
+  /*
+  val pos = findFirst(names, _.length > 25)
+   */
+
   // Exercise 2: Implement a polymorphic function to check whether
   // an `Array[A]` is sorted
-  def isSorted[A](as: Array[A], gt: (A, A) => Boolean): Boolean = ???
+  def isSorted[A](as: Array[A], gt: (A, A) => Boolean): Boolean =
+    @annotation.tailrec
+    def loop(i: Int): Boolean =
+      if i >= as.length - 1 then true
+      else if gt(as(i), as(i + 1)) then false
+      else loop(i + 1)
+    loop(0)
+
+  /*
+  val sortedNamed = isSorted(names, _ >= _)
+   */
 
   // Polymorphic functions are often so constrained by their type
   // that they only have one implementation! Here's an example:
