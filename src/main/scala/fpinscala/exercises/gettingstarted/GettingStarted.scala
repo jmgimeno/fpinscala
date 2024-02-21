@@ -67,12 +67,10 @@ object MyProgram:
   def fibIter(n: Int): Int =
     var current = 0
     var next = 1
-    var i = n
-    while i > 0 do
+    for _ <- 1 to n do
       val tmp = current
       current = next
       next = tmp + next
-      i -= 1
     current
 
   def fibRec(n: Int): Int =
@@ -267,7 +265,7 @@ object PolymorphicFunctions:
    */
 
   // Exercise 2: Implement a polymorphic function to check whether
-  // an `Array[A]` is sorted
+  // an `Array[A]` is sorted increasingly
   def isSorted[A](as: Array[A], gt: (A, A) => Boolean): Boolean =
     @annotation.tailrec
     def loop(i: Int): Boolean =
@@ -291,13 +289,37 @@ object PolymorphicFunctions:
   // Note that `=>` associates to the right, so we could
   // write the return type as `A => B => C`
   def curry[A, B, C](f: (A, B) => C): A => (B => C) =
-    ???
+    (a: A) => (b: B) => f(a, b)
+
+  // Shit all the way down this hole
+  def curry2[Object1, Object2, Object3](
+      function1: (Object1, Object2) => Object3
+  ): Object1 => (Object2 => Object3) =
+    (o1: Object1) => (o2: Object2) => function1(o1, o2)
 
   // NB: The `Function2` trait has a `curried` method already
 
   // Exercise 4: Implement `uncurry`
-  def uncurry[A, B, C](f: A => B => C): (A, B) => C =
-    ???
+  def uncurry[A, B, C](f: A => (B => C)): (A, B) => C =
+    (a: A, b: B) =>
+      val g: B => C = f(a)
+      g(b)
+
+  def uncurry2[A, B, C](f: A => (B => C)): (A, B) => C =
+    (a: A, b: B) => f(a)(b)
+
+  def uncurry3[A, B, C](f: A => (B => C)): (A, B) => C =
+    (a: A, b: B) => f.apply(a).apply(b)
+
+  def uncurry4[A, B, C](f: A => (B => C)): (A, B) => C =
+    f(_)(_)
+
+  /*
+  str.toUpperCase().charAt(0)
+
+  var str2 = str.toUpperCase()
+  str2.charAt(0)
+   */
 
   /*
   NB: There is a method on the `Function` object in the standard library,
@@ -312,4 +334,59 @@ object PolymorphicFunctions:
   // Exercise 5: Implement `compose`
 
   def compose[A, B, C](f: B => C, g: A => B): A => C =
-    ???
+    (a: A) => f(g(a))
+
+  // Exercise 6: return the function which returns the function
+  // than applies f n times on the A that is passed
+
+  def iterate[A](n: Int, f: A => A): A => A =
+    if n == 0 then (a: A) => a
+    else compose(f, iterate(n - 1, f))
+
+  def iterate2[A](n: Int, f: A => A): A => A =
+    @annotation.tailrec
+    def go(n: Int, acc: A => A): A => A =
+      if n == 0 then acc
+      else go(n - 1, compose(f, acc))
+    go(n, a => a)
+
+  def iterate3[A](n: Int, f: A => A): A => A =
+    if n == 0 then a => a
+    else
+      val g = iterate3(n / 2, f)
+      if n % 2 == 0 then compose(g, g)
+      else compose(f, compose(g, g))
+
+  def iterate4[A](n: Int, f: A => A): A => A =
+    (a: A) =>
+      if n == 0 then a
+      else iterate4(n - 1, f)(f(a))
+
+  def iterate5[A](n: Int, f: A => A): A => A =
+    @annotation.tailrec
+    def go(n: Int, acc: A): A =
+      if n == 0 then acc
+      else go(n - 1, f(acc))
+    a => go(n, a)
+
+  @main def iterateExamples =
+    def sum(a: Int, b: Int) =
+      iterate(a, (n: Int) => n + 1)(b)
+
+    def mult(a: Int, b: Int) =
+      iterate2(b, (n: Int) => n + a)(0)
+
+    def exp(a: Int, b: Int) =
+      iterate3(b, (n: Int) => n * a)(1)
+
+    def count(n: Int) =
+      iterate4(n, (n: Int) => n + 1)(0)
+
+    def exp2(n: Int) =
+      iterate5(n, (n: Int) => 2 * n)(1)
+
+    println(s"12 + 30 = ${sum(12, 30)}")
+    println(s"12 * 30 = ${mult(12, 30)}")
+    println(s"2^11 = ${exp(2, 11)}")
+    println(s"42 = ${count(42)}")
+    println(s"2^11 = ${exp2(11)}")
