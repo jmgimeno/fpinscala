@@ -57,7 +57,7 @@ object MyProgram:
 
   // Exercise 1: Write a function to compute the nth fibonacci number
 
-  def fib(n: Int) = fibRecFinal(n)
+  def fib(n: Int) = fibRec2(n)
 
   // 0 1 0+1=1 1+1=2 1+2=3 2+3=5 3+5=8 ...
   // f(0) = 0
@@ -105,6 +105,16 @@ object MyProgram:
   // 2 + fibRec(1) + fibRec(0)
   // 2 + 1 + 0
   // 3
+
+  // Another way to define the fibonacci, this time using a method
+  // which returns a pair of values
+  def fibRec2(n: Int) =
+    def fibRecPair(n: Int): (Int, Int) =
+      if n == 0 then (0, 1)
+      else
+        val (previous, current) = fibRecPair(n - 1)
+        (current, previous + current)
+    fibRecPair(n)(0)
 
   // This definition and `formatAbs` are very similar..
   private def formatFactorial(n: Int) =
