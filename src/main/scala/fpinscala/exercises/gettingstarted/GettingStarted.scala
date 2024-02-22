@@ -340,7 +340,7 @@ object PolymorphicFunctions:
   // than applies f n times on the A that is passed
 
   def iterate[A](n: Int, f: A => A): A => A =
-    if n == 0 then (a: A) => a
+    if n == 0 then a => a
     else compose(f, iterate(n - 1, f))
 
   def iterate2[A](n: Int, f: A => A): A => A =
