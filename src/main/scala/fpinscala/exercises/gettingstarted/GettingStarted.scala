@@ -342,7 +342,7 @@ object PolymorphicFunctions:
   // is returned
 
   def iterate[A](n: Int, f: A => A): A => A =
-    if n <= 0 then a => a
+    if n <= 0 then (a: A) => a
     else compose(f, iterate(n - 1, f))
 
   def iterate2[A](n: Int, f: A => A): A => A =
@@ -356,8 +356,9 @@ object PolymorphicFunctions:
     if n <= 0 then a => a
     else
       val g = iterate3(n / 2, f)
-      if n % 2 == 0 then compose(g, g)
-      else compose(f, compose(g, g))
+      val h = compose(g, g)
+      if n % 2 == 0 then h
+      else compose(f, h)
 
   def iterate4[A](n: Int, f: A => A): A => A =
     (a: A) =>
