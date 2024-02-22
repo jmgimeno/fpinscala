@@ -338,6 +338,8 @@ object PolymorphicFunctions:
 
   // Exercise 6: return the function which returns the function
   // than applies f n times on the A that is passed
+  // If the function is never applies (n <= 0) then the given A
+  // is returned
 
   def iterate[A](n: Int, f: A => A): A => A =
     if n == 0 then a => a
@@ -346,12 +348,12 @@ object PolymorphicFunctions:
   def iterate2[A](n: Int, f: A => A): A => A =
     @annotation.tailrec
     def go(n: Int, acc: A => A): A => A =
-      if n == 0 then acc
+      if n <= 0 then acc
       else go(n - 1, compose(f, acc))
     go(n, a => a)
 
   def iterate3[A](n: Int, f: A => A): A => A =
-    if n == 0 then a => a
+    if n <= 0 then a => a
     else
       val g = iterate3(n / 2, f)
       if n % 2 == 0 then compose(g, g)
@@ -359,13 +361,13 @@ object PolymorphicFunctions:
 
   def iterate4[A](n: Int, f: A => A): A => A =
     (a: A) =>
-      if n == 0 then a
+      if n <= 0 then a
       else iterate4(n - 1, f)(f(a))
 
   def iterate5[A](n: Int, f: A => A): A => A =
     @annotation.tailrec
     def go(n: Int, acc: A): A =
-      if n == 0 then acc
+      if n <= 0 then acc
       else go(n - 1, f(acc))
     a => go(n, a)
 
