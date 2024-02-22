@@ -342,7 +342,7 @@ object PolymorphicFunctions:
   // is returned
 
   def iterate[A](n: Int, f: A => A): A => A =
-    if n == 0 then a => a
+    if n <= 0 then a => a
     else compose(f, iterate(n - 1, f))
 
   def iterate2[A](n: Int, f: A => A): A => A =
