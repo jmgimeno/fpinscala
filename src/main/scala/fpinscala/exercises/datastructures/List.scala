@@ -9,7 +9,6 @@ enum List[+A]:
     * another `List[A]`, which may be `Nil` or another `Cons`.
     */
   case Cons(head: A, tail: List[A])
-
 end List
 
 object List: // `List` companion object. Contains functions for creating and working with lists.
