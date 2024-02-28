@@ -32,3 +32,5 @@ sum(Cons(2, Cons(1, Nil)))
 val list = List.apply(1, 2, 3, 4, 5)
 
 val list2 = List(1, 2, 3, 4, 5)
+
+List.drop(list2, 0)

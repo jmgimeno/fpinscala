@@ -29,3 +29,9 @@ val list2 = new Engineer :: Nil
 val list3 = new Person :: list2
 
 var list4: List[Any] = 42 :: list3
+
+def sum(l: List[Int]): Int = l match
+  case Nil     => 0
+  case x :: xs => x + sum(xs)
+
+sum(list)

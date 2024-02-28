@@ -41,15 +41,39 @@ object List: // `List` companion object. Contains functions for creating and wor
       case Nil        => a2
       case Cons(h, t) => Cons(h, append(t, a2))
 
-  def tail[A](l: List[A]): List[A] = ???
+  /** tots els elements menys el primer */
+  def tail[A](l: List[A]): List[A] = l match
+    case Nil           => sys.error("tail of empty list")
+    case Cons(_, tail) => tail
 
-  def setHead[A](l: List[A], h: A): List[A] = ???
+  /** Canviar el primer element d'una llista per el que es passa per parametre
+    */
+  def setHead[A](l: List[A], h: A): List[A] =
+    l match
+      case Nil           => sys.error("can't swap first element of [Nothing]")
+      case Cons(_, tail) => Cons(h, tail)
 
-  def drop[A](l: List[A], n: Int): List[A] = ???
+  // elimina els n primers elements de la llista
+  def drop[A](l: List[A], n: Int): List[A] =
+    l match
+      case Nil                  => Nil
+      case Cons(_, xs) if n > 0 => drop(xs, n - 1)
+      case _                    => l
 
-  def dropWhile[A](l: List[A], f: A => Boolean): List[A] = ???
+  // mentre cumpleixi la condicio elimina elements
+  def dropWhile[A](l: List[A], cond: A => Boolean): List[A] =
+    l match
+      case Nil                    => Nil
+      case Cons(x, xs) if cond(x) => dropWhile(xs, cond)
+      case _                      => l
 
-  def init[A](l: List[A]): List[A] = ???
+  // Llista amb tots els elements excepte el darrer
+  // errors sobre llista buida
+  def init[A](l: List[A]) =
+    l match
+      case Nil          => sys.error("___")
+      case Cons(_, Nil) => Nil
+      case Cons(x, xs)  => Cons(x, init(xs))
 
   def foldRight[A, B](
       as: List[A],
@@ -71,7 +95,7 @@ object List: // `List` companion object. Contains functions for creating and wor
     ) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
 
   def length[A](l: List[A]): Int = ???
-
+  //
   def foldLeft[A, B](l: List[A], acc: B, f: (B, A) => B): B = ???
 
   def sumViaFoldLeft(ns: List[Int]): Int = ???
