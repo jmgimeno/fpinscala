@@ -69,9 +69,9 @@ object List: // `List` companion object. Contains functions for creating and wor
 
   // Llista amb tots els elements excepte el darrer
   // errors sobre llista buida
-  def init[A](l: List[A]) =
+  def init[A](l: List[A]): List[A] =
     l match
-      case Nil          => sys.error("___")
+      case Nil          => sys.error("init of empty list")
       case Cons(_, Nil) => Nil
       case Cons(x, xs)  => Cons(x, init(xs))
 
