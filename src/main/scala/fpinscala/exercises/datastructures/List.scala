@@ -95,7 +95,9 @@ object List: // `List` companion object. Contains functions for creating and wor
     ) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
 
   def length[A](l: List[A]): Int = ???
-  //
+
+  def lengthViaFoldRight[A](l: List[A]): Int = ???
+
   def foldLeft[A, B](l: List[A], acc: B, f: (B, A) => B): B = ???
 
   def sumViaFoldLeft(ns: List[Int]): Int = ???
@@ -106,8 +108,13 @@ object List: // `List` companion object. Contains functions for creating and wor
 
   def reverse[A](l: List[A]): List[A] = ???
 
-  def appendViaFoldRight[A](l: List[A], r: List[A]): List[A] = ???
+  def reverseViaFold[A](l: List[A]): List[A] = ???
 
+  def foldRightViaFoldLeft[A, B](l: List[A], acc: B)(f: (A, B) => B): B = ???
+
+  def appendViaFold[A](l: List[A], r: List[A]): List[A] = ???
+
+  // linear on total length of lists
   def concat[A](l: List[List[A]]): List[A] = ???
 
   def incrementEach(l: List[Int]): List[Int] = ???
