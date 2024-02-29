@@ -94,21 +94,50 @@ object List: // `List` companion object. Contains functions for creating and wor
       _ * _
     ) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
 
-  def length[A](l: List[A]): Int = ???
+  def length[A](l: List[A]): Int =
+    l match
+      case Nil         => 0
+      case Cons(x, xs) => 1 + length(xs)
 
-  def lengthViaFoldRight[A](l: List[A]): Int = ???
+  def lengthViaFoldRight[A](l: List[A]): Int =
+    foldRight(l, 0, (_, y) => 1 + y)
 
-  def foldLeft[A, B](l: List[A], acc: B, f: (B, A) => B): B = ???
+  @annotation.tailrec
+  def foldLeft[A, B](l: List[A], acc: B, f: (B, A) => B): B =
+    l match
+      case Nil         => acc
+      case Cons(x, xs) => foldLeft(xs, f(acc, x), f)
 
-  def sumViaFoldLeft(ns: List[Int]): Int = ???
+  def sumViaFoldLeft(ns: List[Int]): Int =
+    foldLeft(ns, 0, _ + _)
 
-  def productViaFoldLeft(ns: List[Double]): Double = ???
+  def productViaFoldLeft(ns: List[Double]): Double =
+    foldLeft(ns, 1.0, _ * _)
 
-  def lengthViaFoldLeft[A](l: List[A]): Int = ???
+  def lengthViaFoldLeft[A](l: List[A]): Int =
+    foldLeft(l, 0, (x, _) => 1 + x)
 
-  def reverse[A](l: List[A]): List[A] = ???
+  def reverse[A](l: List[A]): List[A] =
+    l match
+      case Nil              => Nil
+      case Cons(head, tail) => append(reverse(tail), Cons(head, Nil))
 
-  def reverseViaFold[A](l: List[A]): List[A] = ???
+  def reverseTailrec[A](l: List[A]): List[A] =
+    @annotation.tailrec
+    def go(l: List[A], acc: List[A]): List[A] =
+      l match
+        case Nil              => acc
+        case Cons(head, tail) => go(tail, Cons(head, acc))
+    go(l, Nil)
+
+  def reverseViaFoldRight[A](l: List[A]): List[A] =
+    foldRight(
+      l,
+      Nil: List[A],
+      (head, reversedTail) => append(reversedTail, Cons(head, Nil))
+    )
+
+  def reverseViaFoldLeft[A](l: List[A]): List[A] = ???
 
   def foldRightViaFoldLeft[A, B](l: List[A], acc: B)(f: (A, B) => B): B = ???
 
