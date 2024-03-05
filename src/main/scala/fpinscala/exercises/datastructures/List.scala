@@ -278,13 +278,13 @@ object List: // `List` companion object. Contains functions for creating and wor
       case Nil        => a2
       case Cons(h, t) => Cons(h, append(t, a2))
    */
-  def appendViaFold[A](a1: List[A], a2: List[A]): List[A] =
+  def appendViaFoldRight[A](a1: List[A], a2: List[A]): List[A] =
     foldRightViaFoldLeft(a1, a2)((h, append_t_a2) => Cons(h, append_t_a2))
 
-  def appendViaFold2[A](a1: List[A], a2: List[A]): List[A] =
+  def appendViaFoldRight2[A](a1: List[A], a2: List[A]): List[A] =
     foldRightViaFoldLeft(a1, a2)(Cons(_, _))
 
-  def appendViaFold3[A](a1: List[A], a2: List[A]): List[A] =
+  def appendViaFoldRight3[A](a1: List[A], a2: List[A]): List[A] =
     foldRightViaFoldLeft(a1, a2)(Cons.apply)
 
   // linear on total length of lists
