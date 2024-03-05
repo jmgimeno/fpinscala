@@ -94,6 +94,15 @@ object List: // `List` companion object. Contains functions for creating and wor
       _ * _
     ) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
 
+  /*
+    foldRight(List(a1, a2, a3), acc, f)
+  =
+   f(a1, f(a2, f(a3, acc)))
+                    ^^^^^^^^^
+           ^^^^^^^^^^^^^^^
+   ^^^^^^^^^^^^^^^^^^^^
+   */
+
   def length[A](l: List[A]): Int =
     l match
       case Nil         => 0
@@ -107,6 +116,15 @@ object List: // `List` companion object. Contains functions for creating and wor
     l match
       case Nil         => acc
       case Cons(x, xs) => foldLeft(xs, f(acc, x), f)
+
+  /*
+    foldLeft(List(a1, a2, a3), acc, f)
+  =
+   f(f(f(acc, a1), a2), a3)
+        ^^^^^^^^^
+      ^^^^^^^^^^^^^^^
+    ^^^^^^^^^^^^^^^^^^^^^
+   */
 
   def sumViaFoldLeft(ns: List[Int]): Int =
     foldLeft(ns, 0, _ + _)
@@ -122,6 +140,22 @@ object List: // `List` companion object. Contains functions for creating and wor
       case Nil              => Nil
       case Cons(head, tail) => append(reverse(tail), Cons(head, Nil))
 
+  def snoc[A](init: List[A], last: A): List[A] =
+    init match
+      case Nil         => Cons(last, Nil)
+      case Cons(a, as) => Cons(a, snoc(as, last))
+
+  def reverse2[A](l: List[A]): List[A] =
+    l match
+      case Nil              => Nil
+      case Cons(head, tail) => snoc(reverse2(tail), head)
+
+  /*
+  snoc(List(1, 2, 3), 4) => List(1, 2, 3, 4)
+
+  Cons(1, List(2, 3, 4)) => List(1, 2, 3, 4)
+   */
+
   def reverseTailrec[A](l: List[A]): List[A] =
     @annotation.tailrec
     def go(l: List[A], acc: List[A]): List[A] =
@@ -130,6 +164,20 @@ object List: // `List` companion object. Contains functions for creating and wor
         case Cons(head, tail) => go(tail, Cons(head, acc))
     go(l, Nil)
 
+  /*
+    reverse(List(1, 2, 3))
+  =
+    go(List(1, 2, 3), Nil)
+  =
+    go(List(2, 3), List(1))
+  =
+    go(List(3), List(2, 1))
+  =
+    go(List(), List(3, 2, 1))
+  =
+    List(3, 2, 1)
+   */
+
   def reverseViaFoldRight[A](l: List[A]): List[A] =
     foldRight(
       l,
@@ -137,11 +185,107 @@ object List: // `List` companion object. Contains functions for creating and wor
       (head, reversedTail) => append(reversedTail, Cons(head, Nil))
     )
 
-  def reverseViaFoldLeft[A](l: List[A]): List[A] = ???
+  def reverseViaFoldRight2[A](l: List[A]): List[A] =
+    foldRight(
+      l,
+      Nil: List[A],
+      (head, reversedTail) => snoc(reversedTail, head)
+    )
 
-  def foldRightViaFoldLeft[A, B](l: List[A], acc: B)(f: (A, B) => B): B = ???
+  /*
+    def reverseTailrec[A](l: List[A]): List[A] =
+      @annotation.tailrec
+      def go(l: List[A], acc: List[A]): List[A] =
+        l match
+          case Nil              => acc
+          case Cons(head, tail) => go(tail, Cons(head, acc))
+      go(l, Nil)
 
-  def appendViaFold[A](l: List[A], r: List[A]): List[A] = ???
+    @annotation.tailrec
+    def foldLeft[A, B](l: List[A], acc: B, f: (B, A) => B): B =
+      l match
+        case Nil         => acc
+        case Cons(x, xs) => foldLeft(xs, f(acc, x), f)
+   */
+
+  def reverseViaFoldLeft[A](l: List[A]): List[A] =
+//    val f = (acc: List[A], a: A) => Cons(a, acc)
+
+//    val f = new Function2[List[A], A, List[A]]:
+//      override def apply(acc: List[A], a: A): List[A] =
+//        Cons(a, acc)
+
+    foldLeft(l, Nil: List[A], (acc, a) => Cons(a, acc))
+
+  /*
+    reverseViaFoldLeft(List(1, 2, 3))
+  =
+    foldLeft(List(1, 2, 3), Nil, (acc, a) => Cons(a, acc))
+  =
+    foldLeft(List(2, 3), Cons(1, Nil), (acc. a) => Cons(a, acc))
+  =
+    foldLeft(List(3), Cons(2, Cons(1, Nil)), (acc, a)=>Cons(a, acc))
+  =
+    foldLeft(Nil, Cons(3, Cons(2, Cons(1, Nil))), (acc, a) => Cons(a, acc)
+  =
+    Cons(3, Cons(2, Cons(1, Nil)))
+   */
+
+  /*
+    foldRight(List(a1, a2, a3), acc, f)
+  =
+   f(a1, f(a2, f(a3, acc)))
+                    ^^^^^^^^^
+           ^^^^^^^^^^^^^^^
+   ^^^^^^^^^^^^^^^^^^^^
+
+    foldLeft(List(a1, a2, a3), acc, f)
+  =
+   f(f(f(acc, a1), a2), a3)
+        ^^^^^^^^^
+      ^^^^^^^^^^^^^^^
+    ^^^^^^^^^^^^^^^^^^^^^
+   */
+
+  /*
+    foldLeft(reverse(List(a1, a2, a3), acc, g)
+  =
+   foldLeft(List(a3, a2, a1), acc, g)
+  =
+   g(g(g(acc, a3), a2), a1)
+
+  g = (acc, a) => f(a, acc)
+
+  g(g(g(acc, a3), a2), a1)
+  =
+  f(a1, g(g(acc, a3), a2))
+  =
+  f(a1, f(a2, g(acc, a3)))
+  =
+  f(a1, f(a2, f(a3, acc)))
+
+    foldRight(List(a1, a2, a3), acc, f)
+  =
+   f(a1, f(a2, f(a3, acc)))
+   */
+
+  def foldRightViaFoldLeft[A, B](l: List[A], acc: B)(f: (A, B) => B): B =
+    foldLeft(reverseViaFoldLeft(l), acc, (acc, a) => f(a, acc))
+
+  /*
+  def append[A](a1: List[A], a2: List[A]): List[A] =
+    a1 match
+      case Nil        => a2
+      case Cons(h, t) => Cons(h, append(t, a2))
+   */
+  def appendViaFold[A](a1: List[A], a2: List[A]): List[A] =
+    foldRightViaFoldLeft(a1, a2)((h, append_t_a2) => Cons(h, append_t_a2))
+
+  def appendViaFold2[A](a1: List[A], a2: List[A]): List[A] =
+    foldRightViaFoldLeft(a1, a2)(Cons(_, _))
+
+  def appendViaFold3[A](a1: List[A], a2: List[A]): List[A] =
+    foldRightViaFoldLeft(a1, a2)(Cons.apply)
 
   // linear on total length of lists
   def concat[A](l: List[List[A]]): List[A] = ???

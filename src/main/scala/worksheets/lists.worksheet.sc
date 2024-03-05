@@ -36,3 +36,14 @@ val list2 = List(1, 2, 3, 4, 5)
 List.drop(list2, 0)
 
 List.reverse(list)
+
+List.foldRight(list, 0, _ + _)
+
+List.foldRightViaFoldLeft(list, 0)(_ + _)
+
+List.foldRightViaFoldLeft(list, 0) { (a, acc) =>
+  a + acc
+}
+
+val mistery: ((Int, Int) => Int) => Int = List.foldRightViaFoldLeft(list, 0)
+mistery(_ + _)
