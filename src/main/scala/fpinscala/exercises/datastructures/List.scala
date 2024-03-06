@@ -288,24 +288,62 @@ object List: // `List` companion object. Contains functions for creating and wor
     foldRightViaFoldLeft(a1, a2)(Cons.apply)
 
   // linear on total length of lists
-  def concat[A](l: List[List[A]]): List[A] = ???
+  // with foldLeft the cost is not linear
+  def concat[A](l: List[List[A]]): List[A] =
+    foldRightViaFoldLeft(l, Nil: List[A])((as, acc) => append(as, acc))
 
-  def incrementEach(l: List[Int]): List[Int] = ???
+  def incrementEach(l: List[Int]): List[Int] =
+    foldRightViaFoldLeft(l, Nil: List[Int])((element, acc) =>
+      Cons(element + 1, acc)
+    )
 
-  def doubleToString(l: List[Double]): List[String] = ???
+  def doubleToString(l: List[Double]): List[String] =
+    foldRightViaFoldLeft(l, Nil: List[String])((element, acc) =>
+      Cons(element.toString, acc)
+    )
 
-  def map[A, B](l: List[A], f: A => B): List[B] = ???
+  def map[A, B](l: List[A], f: A => B): List[B] =
+    foldRightViaFoldLeft(l, Nil: List[B])((element, acc) =>
+      Cons(f(element), acc)
+    )
 
-  def filter[A](as: List[A], f: A => Boolean): List[A] = ???
+  def filter[A](as: List[A], f: A => Boolean): List[A] =
+    foldRightViaFoldLeft(as, Nil: List[A]) { (element, acc) =>
+      if f(element) then Cons(element, acc)
+      else acc
+    }
 
-  def flatMap[A, B](as: List[A], f: A => List[B]): List[B] = ???
+  def flatMap[A, B](as: List[A], f: A => List[B]): List[B] =
+    foldRightViaFoldLeft(as, Nil: List[B]) { (element, acc) =>
+      append(f(element), acc)
+    }
 
-  def filterViaFlatMap[A](as: List[A], f: A => Boolean): List[A] = ???
+  def filterViaFlatMap[A](as: List[A], f: A => Boolean): List[A] =
+    flatMap(
+      as,
+      a =>
+        if f(a) then Cons(a, Nil)
+        else Nil
+    )
 
-  def addPairwise(a: List[Int], b: List[Int]): List[Int] = ???
+  def addPairwise(a: List[Int], b: List[Int]): List[Int] =
+    (a, b) match
+      case (Cons(x, xs), Cons(y, ys)) => Cons(x + y, addPairwise(xs, ys))
+      case _                          => Nil
 
   // def zipWith - TODO determine signature
 
-  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = ???
+  def zipWith[A, B, C](a: List[A], b: List[B])(f: (A, B) => C): List[C] =
+    (a, b) match
+      case (Cons(x, xs), Cons(y, ys)) => Cons(f(x, y), zipWith(xs, ys)(f))
+      case _                          => Nil
+
+  def zipWithTailRec[A, B, C](a: List[A], b: List[B])(f: (A, B) => C): List[C] =
+    @annotation.tailrec
+    def go(a: List[A], b: List[B], acc: List[C]): List[C] =
+      (a, b) match
+        case (Cons(x, xs), Cons(y, ys)) => go(xs, ys, Cons(f(x, y), acc))
+        case _                          => acc
+    reverseViaFoldLeft(go(a, b, Nil: List[C]))
 
 end List

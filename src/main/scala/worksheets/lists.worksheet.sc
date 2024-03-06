@@ -47,3 +47,13 @@ List.foldRightViaFoldLeft(list, 0) { (a, acc) =>
 
 val mistery: ((Int, Int) => Int) => Int = List.foldRightViaFoldLeft(list, 0)
 mistery(_ + _)
+
+val lis1 = List(1, 2, 3)
+val lis2 = List(4, 5)
+val lis3 = List(6, 7)
+val lislis = List(lis1, lis2, lis3)
+
+List.concat(lislis)
+
+List.zipWithTailRec(lis1, lis2)((_,  _))
+
