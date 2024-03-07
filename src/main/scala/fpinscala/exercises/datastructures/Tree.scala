@@ -1,36 +1,53 @@
 package fpinscala.exercises.datastructures
 
+import scala.math.max
+
 enum Tree[+A]:
   case Leaf(value: A)
   case Branch(left: Tree[A], right: Tree[A])
 
   def size: Int = this match
-    case Leaf(_) => 1
+    case Leaf(_)      => 1
     case Branch(l, r) => 1 + l.size + r.size
 
-  def depth: Int = ???
+  def depth: Int =
+    this match
+      case Leaf(_)             => 0 // The test defines the depth of a leaf as 0
+      case Branch(left, right) => 1 + max(left.depth, right.depth)
 
-  def map[B](f: A => B): Tree[B] = ???
+  def map[B](f: A => B): Tree[B] =
+    this match
+      case Leaf(a)             => Leaf(f(a))
+      case Branch(left, right) => Branch(left.map(f), right.map(f))
 
-  def fold[B](f: A => B, g: (B,B) => B): B = ???
-  
-  def sizeViaFold: Int = ???
-  
-  def depthViaFold: Int = ???
-  
-  def mapViaFold[B](f: A => B): Tree[B] = ???
+  def fold[B](f: A => B, g: (B, B) => B): B =
+    this match
+      case Leaf(a)             => f(a)
+      case Branch(left, right) => g(left.fold(f, g), right.fold(f, g))
+
+  def sizeViaFold: Int =
+    this.fold(_ => 1, (leftSize, rightSize) => 1 + leftSize + rightSize)
+
+  def depthViaFold: Int =
+    fold(_ => 0, (leftDepth, rightDepth) => 1 + (leftDepth max rightDepth))
+
+  def mapViaFold[B](f: A => B): Tree[B] =
+    fold(leafValue => Leaf(f(leafValue)), (leftMap, rightMap) => Branch(leftMap,rightMap))
 
 object Tree:
 
   def size[A](t: Tree[A]): Int = t match
-    case Leaf(_) => 1
-    case Branch(l,r) => 1 + size(l) + size(r)
+    case Leaf(_)      => 1
+    case Branch(l, r) => 1 + size(l) + size(r)
 
   // here we have problems with this method
   // what is the value to return when there is no positive value?
   // NOTE: A much better solution will be presented in the next chapter !!
-  extension (t: Tree[Int]) def firstPositive: Int = ???
+  extension (t: Tree[Int])
+    def firstPositive: Int = ???
+    def maximum: Int = ???
 
-  extension (t: Tree[Int]) def maximum: Int = ???
+  //extension (t: Tree[Int]) def maximum: Int = ???
 
   extension (t: Tree[Int]) def maximumViaFold: Int = ???
+
