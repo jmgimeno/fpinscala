@@ -26,6 +26,9 @@ object Tree:
     case Leaf(_) => 1
     case Branch(l,r) => 1 + size(l) + size(r)
 
+  // here we have problems with this method
+  // what is the value to return when there is no positive value?
+  // NOTE: A much better solution will be presented in the next chapter !!
   extension (t: Tree[Int]) def firstPositive: Int = ???
 
   extension (t: Tree[Int]) def maximum: Int = ???
