@@ -346,4 +346,6 @@ object List: // `List` companion object. Contains functions for creating and wor
         case _                          => acc
     reverseViaFoldLeft(go(a, b, Nil: List[C]))
 
+  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = ???
+
 end List
