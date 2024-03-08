@@ -1,5 +1,6 @@
 package fpinscala.exercises.datastructures
 
+import scala.annotation.tailrec
 import scala.math.max
 
 enum Tree[+A]:
@@ -25,6 +26,29 @@ enum Tree[+A]:
       case Leaf(a)             => f(a)
       case Branch(left, right) => g(left.fold(f, g), right.fold(f, g))
 
+  def foldTailRec[B](f: A => B, g: (B, B) => B): B = {
+    enum Context {
+      case Call(tree: Tree[A])
+      case AfterLeft(leftFold: B)
+      case Result(result: B)
+    }
+    import Context.*
+    import scala.collection.immutable.List
+    @tailrec
+    def go(stack: List[Context]): B = stack match {
+      case Call(tree @ Leaf(a)) :: rest => go(Result(f(a)) :: rest)
+      case Call(tree @ Branch(left, _)) :: rest =>
+        go(Call(left) :: Call(tree) :: rest)
+      case Result(result) :: Nil => result
+      case Result(leftFold) :: Call(tree @ Branch(_, right)) :: rest =>
+        go(Call(right) :: AfterLeft(leftFold) :: rest)
+      case Result(rightFold) :: AfterLeft(leftFold) :: rest =>
+        go(Result(g(leftFold, rightFold)) :: rest)
+      case _ => sys.error("Should not happen")
+    }
+    go(List(Call(this)))
+  }
+
   def sizeViaFold: Int =
     this.fold(_ => 1, (leftSize, rightSize) => 1 + leftSize + rightSize)
 
@@ -32,7 +56,10 @@ enum Tree[+A]:
     fold(_ => 0, (leftDepth, rightDepth) => 1 + (leftDepth max rightDepth))
 
   def mapViaFold[B](f: A => B): Tree[B] =
-    fold(leafValue => Leaf(f(leafValue)), (leftMap, rightMap) => Branch(leftMap,rightMap))
+    fold(
+      leafValue => Leaf(f(leafValue)),
+      (leftMap, rightMap) => Branch(leftMap, rightMap)
+    )
 
 object Tree:
 
@@ -47,7 +74,6 @@ object Tree:
     def firstPositive: Int = ???
     def maximum: Int = ???
 
-  //extension (t: Tree[Int]) def maximum: Int = ???
+  // extension (t: Tree[Int]) def maximum: Int = ???
 
   extension (t: Tree[Int]) def maximumViaFold: Int = ???
-
