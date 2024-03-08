@@ -37,10 +37,10 @@ enum Tree[+A]:
     @tailrec
     def go(stack: List[Context]): B = (stack : @unchecked) match {
       case Call(tree @ Leaf(a)) :: rest => go(Result(f(a)) :: rest)
-      case Call(tree @ Branch(left, _)) :: rest =>
-        go(Call(left) :: Call(tree) :: rest)
+      case Call(tree @ Branch(left, right)) :: rest =>
+        go(Call(left) :: Call(right) :: rest)
       case Result(result) :: Nil => result
-      case Result(leftFold) :: Call(tree @ Branch(_, right)) :: rest =>
+      case Result(leftFold) :: Call(right) :: rest =>
         go(Call(right) :: AfterLeft(leftFold) :: rest)
       case Result(rightFold) :: AfterLeft(leftFold) :: rest =>
         go(Result(g(leftFold, rightFold)) :: rest)
