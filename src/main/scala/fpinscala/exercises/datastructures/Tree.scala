@@ -35,7 +35,7 @@ enum Tree[+A]:
     import Context.*
     import scala.collection.immutable.List
     @tailrec
-    def go(stack: List[Context]): B = stack match {
+    def go(stack: List[Context]): B = (stack : @unchecked) match {
       case Call(tree @ Leaf(a)) :: rest => go(Result(f(a)) :: rest)
       case Call(tree @ Branch(left, _)) :: rest =>
         go(Call(left) :: Call(tree) :: rest)
@@ -44,7 +44,6 @@ enum Tree[+A]:
         go(Call(right) :: AfterLeft(leftFold) :: rest)
       case Result(rightFold) :: AfterLeft(leftFold) :: rest =>
         go(Result(g(leftFold, rightFold)) :: rest)
-      case _ => sys.error("Should not happen")
     }
     go(List(Call(this)))
   }
