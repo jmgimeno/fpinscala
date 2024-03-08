@@ -29,7 +29,6 @@ enum Tree[+A]:
   def foldTailRec[B](f: A => B, g: (B, B) => B): B = {
     enum Context {
       case Call(tree: Tree[A])
-      case AfterLeft(leftFold: B)
       case Result(result: B)
     }
     import Context.*
@@ -41,8 +40,8 @@ enum Tree[+A]:
         go(Call(left) :: Call(right) :: rest)
       case Result(result) :: Nil => result
       case Result(leftFold) :: Call(right) :: rest =>
-        go(Call(right) :: AfterLeft(leftFold) :: rest)
-      case Result(rightFold) :: AfterLeft(leftFold) :: rest =>
+        go(Call(right) :: Result(leftFold) :: rest)
+      case Result(rightFold) :: Result(leftFold) :: rest =>
         go(Result(g(leftFold, rightFold)) :: rest)
     }
     go(List(Call(this)))
