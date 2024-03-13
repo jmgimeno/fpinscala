@@ -19,7 +19,7 @@ enum Option[+A]:
 
   def flatMapPM[B](f: A => Option[B]): Option[B] =
     this match
-      case None => None
+      case None    => None
       case Some(a) => f(a)
 
   def flatMap[B](f: A => Option[B]): Option[B] =
@@ -32,8 +32,8 @@ enum Option[+A]:
   def orElsePM[B >: A](ob: => Option[B]): Option[B] =
     this match
       case None => ob
-      case _ => this
-    // this: Option[A]
+      case _    => this
+      // this: Option[A]
 
   def orElse[B >: A](ob: => Option[B]): Option[B] =
     map(Some(_)).getOrElse(ob)
@@ -67,10 +67,42 @@ object Option:
     if xs.isEmpty then None
     else Some(xs.sum / xs.length)
 
-  def variance(xs: Seq[Double]): Option[Double] = ???
+  def variance(xs: Seq[Double]): Option[Double] =
+    mean(xs).flatMap { mu =>
+      mean {
+        xs.map { x =>
+          math.pow(x - mu, 2)
+        }
+      }
+    }
 
-  def map2[A, B, C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = ???
+  def varianceJava(xs: Seq[Double]): Double =
+    variance(xs).getOrElse(throw new Exception("patata"))
 
-  def sequence[A](as: List[Option[A]]): Option[List[A]] = ???
+  def map2[A, B, C](oa: Option[A], ob: Option[B])(f: (A, B) => C): Option[C] =
+    oa.flatMap { a =>
+      ob.map { b =>
+        f(a, b)
+      }
+    }
 
-  def traverse[A, B](as: List[A])(f: A => Option[B]): Option[List[B]] = ???
+  def map2For[A, B, C](oa: Option[A], ob: Option[B])(f: (A, B) => C): Option[C] =
+    for
+      a <- oa
+      b <- ob
+    yield f(a, b)
+    
+  /*
+    val a = extract(oa)
+    val b = extract(ob)
+    f(a, b)
+   */
+  def sequence[A](as: List[Option[A]]): Option[List[A]] =
+    as.foldRight(Some(Nil)) { (oa: Option[A], oas: Option[List[A]]) =>
+      map2(oa,oas)((a: A, as: List[A]) => a :: as)
+    }
+
+  def traverse[A, B](as: List[A])(f: A => Option[B]): Option[List[B]] =
+    as.foldRight(Some(Nil)) { (a: A, obs: Option[List[B]]) =>
+      map2(f(a), obs)((b: B, bs: List[B]) => b :: bs)
+    }

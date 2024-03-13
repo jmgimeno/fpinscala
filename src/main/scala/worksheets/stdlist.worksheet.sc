@@ -35,3 +35,16 @@ def sum(l: List[Int]): Int = l match
   case x :: xs => x + sum(xs)
 
 sum(list)
+
+val pairs =
+  for
+    a <- List(1, 2, 3)
+    b <- List("a", "b")
+  yield (a, b)
+
+val pairs2 =
+  List(1, 2, 3).flatMap { a =>
+    List("a", "b").map { b =>
+      (a, b)
+    }
+  }
