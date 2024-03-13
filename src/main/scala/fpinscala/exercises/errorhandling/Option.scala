@@ -102,6 +102,7 @@ object Option:
       map2(oa,oas)((a: A, as: List[A]) => a :: as)
     }
 
+  // def map[A, B]  (as: List[A])(f: A =>        B ):        List[B]
   def traverse[A, B](as: List[A])(f: A => Option[B]): Option[List[B]] =
     as.foldRight(Some(Nil)) { (a: A, obs: Option[List[B]]) =>
       map2(f(a), obs)((b: B, bs: List[B]) => b :: bs)
