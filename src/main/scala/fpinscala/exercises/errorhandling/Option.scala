@@ -99,7 +99,7 @@ object Option:
    */
   def sequence[A](as: List[Option[A]]): Option[List[A]] =
     as.foldRight(Some(Nil)) { (oa: Option[A], oas: Option[List[A]]) =>
-      map2(oa,oas)((a: A, as: List[A]) => a :: as)
+      map2(oa, oas)((a: A, as: List[A]) => a :: as)
     }
 
   // def map[A, B]  (as: List[A])(f: A =>        B ):        List[B]
