@@ -49,6 +49,9 @@ object Either:
       f(a).map2(acc)(_ :: _)
     )
 
+  def traverse_viaSequence[E, A, B](as: List[A])(f: A => Either[E, B]): Either[E, List[B]] =
+    sequence(as.map(f))
+
   def sequence_viaTraverse[E1, A1](
       es: List[Either[E1, A1]]
   ): Either[E1, List[A1]] =

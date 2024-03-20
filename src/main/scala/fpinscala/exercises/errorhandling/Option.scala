@@ -107,3 +107,5 @@ object Option:
     as.foldRight(Some(Nil)) { (a: A, obs: Option[List[B]]) =>
       map2(f(a), obs)((b: B, bs: List[B]) => b :: bs)
     }
+    
+
