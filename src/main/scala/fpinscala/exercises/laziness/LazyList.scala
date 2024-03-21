@@ -6,7 +6,8 @@ enum LazyList[+A]:
 
   def toList: List[A] = ???
 
-  def foldRight[B](z: => B)(f: (A, => B) => B): B = // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
+  // The book only defines the second argument as passed by name
+  def foldRight[B](z: => B)(f: (=> A, => B) => B): B = // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
     this match
       case Cons(h,t) => f(h(), t().foldRight(z)(f)) // If `f` doesn't evaluate its second argument, the recursion never occurs.
       case _ => z
@@ -43,6 +44,7 @@ object LazyList:
 
   def empty[A]: LazyList[A] = Empty
 
+  // apply creates a LazyList but it's eager !!!
   def apply[A](as: A*): LazyList[A] =
     if as.isEmpty then empty 
     else cons(as.head, apply(as.tail*))
