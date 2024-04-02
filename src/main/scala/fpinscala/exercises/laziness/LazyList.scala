@@ -17,6 +17,7 @@ enum LazyList[+A]:
   )(
       f: (=> A, => B) => B
   ): B = // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
+    println("foldRight")
     this match
       case Cons(h, t) =>
         f(
@@ -56,7 +57,16 @@ enum LazyList[+A]:
       case Cons(h, t) if p(h()) => cons(h(), t().takeWhile(p))
       case _ => empty
 
-  def forAll(p: A => Boolean): Boolean = ???
+  def takeWhile_viaFoldRight(p: A => Boolean): LazyList[A] =
+    foldRight(empty) { (a, b) =>
+      println("inside takeWhile lambda")
+      if p(a) then cons(a, b) else empty
+    }
+
+  def forAll(p: A => Boolean): Boolean =
+    foldRight(true) { (a, b) =>
+      p(a) && b
+    }
 
   def headOption: Option[A] =
     this match
