@@ -73,6 +73,8 @@ enum LazyList[+A]:
       case Empty => None
       case Cons(h, t) => Some(h())
 
+  def headOption_viaFoldRight: Option[A] = ???
+
   def tailOption: Option[LazyList[A]] =
     this match
       case Empty => None
@@ -80,6 +82,14 @@ enum LazyList[+A]:
 
   // 5.7 map, filter, append, flatmap using foldRight. Part of the exercise is
   // writing your own function signatures.
+
+  def map[B](f: A => B): LazyList[B] = ???
+
+  def filter(p: A => Boolean): LazyList[A] = ???
+
+  def append[A2 >: A](that: => LazyList[A2]): LazyList[A2] = ???
+
+  def flatMap[B](f: A => LazyList[B]): LazyList[B] = ???
 
   def startsWith[B](s: LazyList[B]): Boolean = ???
 
