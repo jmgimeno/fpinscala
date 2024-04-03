@@ -48,14 +48,14 @@ enum LazyList[+A]:
     println(s"drop $n")
     this match
       case Cons(_, t) if n > 0 => t().drop(n - 1)
-      case _ => this
+      case _                   => this
 
   // retorna LazyList[A] mentres es compleixi la propietat
   def takeWhile(p: A => Boolean): LazyList[A] =
     println("take while")
     this match
       case Cons(h, t) if p(h()) => cons(h(), t().takeWhile(p))
-      case _ => empty
+      case _                    => empty
 
   def takeWhile_viaFoldRight(p: A => Boolean): LazyList[A] =
     foldRight(empty) { (a, b) =>
@@ -70,26 +70,49 @@ enum LazyList[+A]:
 
   def headOption: Option[A] =
     this match
-      case Empty => None
+      case Empty      => None
       case Cons(h, t) => Some(h())
 
-  def headOption_viaFoldRight: Option[A] = ???
+  def headOption_viaFoldRight: Option[A] =
+    foldRight(None: Option[A]) { (a, _) =>
+      Some(a)
+    }
 
   def tailOption: Option[LazyList[A]] =
     this match
-      case Empty => None
+      case Empty      => None
       case Cons(h, t) => Some(t())
+
+// Does not work (always returns None)
+//  def tailOption_viaFoldRight: Option[LazyList[A]] =
+//    foldRight(None:Option[LazyList[A]]){
+//      (_, t) => t
+//    }
 
   // 5.7 map, filter, append, flatmap using foldRight. Part of the exercise is
   // writing your own function signatures.
 
-  def map[B](f: A => B): LazyList[B] = ???
+  def map[B](f: A => B): LazyList[B] =
+    foldRight(empty) { (head, restTail) =>
+      cons(f(head), restTail)
+    }
 
-  def filter(p: A => Boolean): LazyList[A] = ???
+  def filter(p: A => Boolean): LazyList[A] =
+    foldRight(empty) { (a, b) =>
+      if p(a) then cons(a, b)
+      else b
+    }
 
-  def append[A2 >: A](that: => LazyList[A2]): LazyList[A2] = ???
+  def append[A2 >: A](that: => LazyList[A2]): LazyList[A2] =
+    println("append")
+    foldRight(that) { (a, b) =>
+      cons(a, b)
+    }
 
-  def flatMap[B](f: A => LazyList[B]): LazyList[B] = ???
+  def flatMap[B](f: A => LazyList[B]): LazyList[B] =
+    foldRight(empty) { (a, b) =>
+      f(a).append(b)
+    }
 
   def startsWith[B](s: LazyList[B]): Boolean = ???
 
@@ -108,18 +131,39 @@ object LazyList:
 
   val ones: LazyList[Int] = LazyList.cons(1, ones)
 
-  def continually[A](a: A): LazyList[A] = ???
+  def continually[A](a: A): LazyList[A] = cons(a, continually(a))
 
-  def from(n: Int): LazyList[Int] = ???
+  def from(n: Int): LazyList[Int] = cons(n, from(n + 1))
 
   lazy val fibs: LazyList[Int] = ???
 
-  def unfold[A, S](state: S)(f: S => Option[(A, S)]): LazyList[A] = ???
+  def unfold[A, S](state: S)(f: S => Option[(A, S)]): LazyList[A] =
+    f(state) match
+      case Some((a, newState)) => cons(a, unfold(newState)(f))
+      case None                => empty
 
   lazy val fibsViaUnfold: LazyList[Int] = ???
 
-  def fromViaUnfold(n: Int): LazyList[Int] = ???
+  def fromViaUnfold(n: Int): LazyList[Int] =
+    unfold(n) { i =>
+      Some((i, i + 1))
+    }
 
-  def continuallyViaUnfold[A](a: A): LazyList[A] = ???
+  val firstFiveEvenNumbers =
+    unfold(1) { i =>
+      if (i > 5) then None else Some((2 * i, i + 1))
+    }
+
+  /*
+  var i = n
+  while true:
+    add i to result
+    i += 1
+
+   */
+  def continuallyViaUnfold[A](a: A): LazyList[A] =
+    unfold(()) { _ =>
+      Some((a, ()))
+    }
 
   lazy val onesViaUnfold: LazyList[Int] = ???
