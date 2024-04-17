@@ -78,6 +78,10 @@ object RNG:
       val (a, rng2) = s(rng)
       (f(a), rng2)
 
+  def map_alt[A, B](s: Rand[A])(f: A => B)(rng: RNG): (B, RNG) =
+    val (a, rng2) = s(rng)
+    (f(a), rng2)
+
   def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
 
   def sequence[A](rs: List[Rand[A]]): Rand[List[A]] = ???
