@@ -21,7 +21,7 @@ val program2: State[Int, Unit] =
 program2.run(1)
 program2.run(2)
 
-def program(n: Int): List[Int] =
+def createList(n: Int): List[Int] =
   var i = n
   var l = List.empty[Int]
   while i != 0 do
@@ -30,39 +30,40 @@ def program(n: Int): List[Int] =
   val r = l
   r
 
-program(3)
+createList(3)
 
-val program3: State[(Int, List[Int]), List[Int]] =
-  for
-    (i, l) <- get[(Int, List[Int])]
-    _ <-
-      if i != 0
-      then
-        for
-          _ <- set((i - 1, i :: l))
-          _: List[Int] <- program3
-        yield ()
-      else
-        unit(())
-    (_, r) <- get
-  yield r
+def createList2(n: Int): List[Int] =
+  lazy val createListAction: State[(Int, List[Int]), List[Int]] =
+    for
+      (i, l) <- get[(Int, List[Int])]
+      _ <-
+        if i != 0
+        then
+          for
+            _ <- set((i - 1, i :: l))
+            _: List[Int] <- createListAction
+          yield ()
+        else
+          unit(())
+      (_, r) <- get
+    yield r
+  createListAction.run((n, List.empty))._1
 
-program3.run((3, List.empty))._1
+createList2(3)
 
-val program4: State[Int, List[Int]] =
-  for
-    i <- get[Int]
-    l <-
-      if i == 0
-      then unit(List.empty)
-      else
-        for
-          _ <- set(i - 1)
-          l1 <- program4
-        yield i :: l1
-  yield l
+def createReversedList(n: Int): List[Int] =
+  lazy val creteReversedListAction: State[Int, List[Int]] =
+    for
+      i <- get[Int]
+      l <-
+        if i == 0
+        then unit(List.empty)
+        else
+          for
+            _ <- set(i - 1)
+            l1 <- creteReversedListAction
+          yield i :: l1
+    yield l
+  creteReversedListAction.run(n)._1
 
-program4.run(3)._1
-program4.run(5)._1
-
-
+createReversedList(3)
