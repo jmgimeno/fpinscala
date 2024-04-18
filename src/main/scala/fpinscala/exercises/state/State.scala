@@ -68,6 +68,7 @@ object RNG:
 
   type Rand[+A] = RNG => (A, RNG)
 
+  // int is an action which generates a random integer
   val int: Rand[Int] = _.nextInt
 
   def unit[A](a: A): Rand[A] =
