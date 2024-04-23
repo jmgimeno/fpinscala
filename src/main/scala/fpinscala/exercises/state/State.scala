@@ -68,6 +68,7 @@ object RNG:
 
   type Rand[+A] = RNG => (A, RNG)
 
+  // int is an action which generates a random integer
   val int: Rand[Int] = _.nextInt
 
   def unit[A](a: A): Rand[A] =
@@ -82,17 +83,32 @@ object RNG:
     val (a, rng2) = s(rng)
     (f(a), rng2)
 
-  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
+  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
+    (rng: RNG) =>
+      val (a, rngA) = ra(rng)
+      val (b, rngB) = rb(rngA)
+      (f(a, b), rngB)
 
-  def sequence[A](rs: List[Rand[A]]): Rand[List[A]] = ???
+  def sequence[A](rs: List[Rand[A]]): Rand[List[A]] =
+    rs.foldRight(unit[List[A]](Nil)) { (ra, ras) =>
+      map2(ra, ras)(_ :: _)
+    }
 
-  def flatMap[A, B](r: Rand[A])(f: A => Rand[B]): Rand[B] = ???
+  def flatMap[A, B](r: Rand[A])(f: A => Rand[B]): Rand[B] =
+    (rng: RNG) =>
+      val(a,rngA) = r(rng)
+      val randB = f(a)
+      randB(rngA)
 
-  def mapViaFlatMap[A, B](r: Rand[A])(f: A => B): Rand[B] = ???
+  def mapViaFlatMap[A, B](r: Rand[A])(f: A => B): Rand[B] =
+    //flatMap(r)(f andThen unit)
+    flatMap(r)(a => unit(f(a)))
+
 
   def map2ViaFlatMap[A, B, C](ra: Rand[A], rb: Rand[B])(
       f: (A, B) => C
-  ): Rand[C] = ???
+  ): Rand[C] =
+    flatMap(ra)(a => map(rb)(b => f(a, b)))
 
 opaque type State[S, +A] = S => (A, S)
 
