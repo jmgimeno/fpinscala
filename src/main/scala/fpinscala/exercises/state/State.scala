@@ -96,14 +96,13 @@ object RNG:
 
   def flatMap[A, B](r: Rand[A])(f: A => Rand[B]): Rand[B] =
     (rng: RNG) =>
-      val(a,rngA) = r(rng)
+      val (a, rngA) = r(rng)
       val randB = f(a)
       randB(rngA)
 
   def mapViaFlatMap[A, B](r: Rand[A])(f: A => B): Rand[B] =
-    //flatMap(r)(f andThen unit)
+    // flatMap(r)(f andThen unit)
     flatMap(r)(a => unit(f(a)))
-
 
   def map2ViaFlatMap[A, B, C](ra: Rand[A], rb: Rand[B])(
       f: (A, B) => C
@@ -113,17 +112,46 @@ object RNG:
 opaque type State[S, +A] = S => (A, S)
 
 object State:
+
+  // List(
+  //    s0 => (a1, s1),
+  //    s1 => (a2, s2),
+  //    s3 => (a3, s3)
+  // )
+
+  // s0 => (List(a1, a2, a3), s3)
+
+  def sequence[S, A](actions: List[State[S, A]]): State[S, List[A]] =
+    actions.foldRight(unit(Nil): State[S, List[A]]) { (sa, acc) =>
+      sa.map2(acc)(_ :: _) //((a, as) => a :: as)
+    }
+
   extension [S, A](underlying: State[S, A])
     def run(s: S): (A, S) = underlying(s)
 
+    // underlying: State[S, A] = S => (A, S)
+    // f: A => B
+    // State[S, B] = S => (B, S)
     def map[B](f: A => B): State[S, B] =
-      ???
+      (s0: S) => {
+        val (a: A, s1: S) = underlying(s0)
+        (f(a), s1)
+      }
 
+    // State[S, B] = S => (B, S)
     def map2[B, C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
-      ???
+      (s0: S) => {
+        val (a: A, s1: S) = underlying(s0)
+        val (b: B, s2: S) = sb(s1)
+        (f(a, b), s2)
+      }
 
     def flatMap[B](f: A => State[S, B]): State[S, B] =
-      ???
+      (s0: S) => {
+        val (a: A, s1: S) =  underlying(s0)
+        val action: State[S, B] = f(a)
+        action(s1)
+      }
 
   def apply[S, A](f: S => (A, S)): State[S, A] = f
 
@@ -138,6 +166,8 @@ object State:
       s <- get[S]
       _ <- set(f(s))
     yield ()
+
+
 
 enum Input:
   case Coin, Turn

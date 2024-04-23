@@ -44,7 +44,8 @@ for1(rng)
 
 // programació combinant coses amb for =
 // combinar map + flatMap
-// programació monàdicab 
+// programació monàdica
+
 def mapViaFor[A, B](r: Rand[A])(f: A => B): Rand[B] =
   for
     a <- r
