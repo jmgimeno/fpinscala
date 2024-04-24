@@ -123,7 +123,12 @@ object State:
 
   def sequence[S, A](actions: List[State[S, A]]): State[S, List[A]] =
     actions.foldRight(unit(Nil): State[S, List[A]]) { (sa, acc) =>
-      sa.map2(acc)(_ :: _) //((a, as) => a :: as)
+      sa.map2(acc)(_ :: _) // ((a, as) => a :: as)
+    }
+
+  def traverse[S, A, B](as: List[A])(f: A => State[S, B]): State[S, List[B]] =
+    as.foldRight(unit(Nil): State[S, List[B]]) { (sa, acc) =>
+      f(sa).map2(acc)(_ :: _) // ((a, as) => a :: as)
     }
 
   extension [S, A](underlying: State[S, A])
@@ -148,7 +153,7 @@ object State:
 
     def flatMap[B](f: A => State[S, B]): State[S, B] =
       (s0: S) => {
-        val (a: A, s1: S) =  underlying(s0)
+        val (a: A, s1: S) = underlying(s0)
         val action: State[S, B] = f(a)
         action(s1)
       }
@@ -167,12 +172,25 @@ object State:
       _ <- set(f(s))
     yield ()
 
-
-
 enum Input:
   case Coin, Turn
 
 case class Machine(locked: Boolean, candies: Int, coins: Int)
 
 object Candy:
-  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = ???
+  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] =
+    for
+      _ <- State.traverse(inputs) { input =>
+        State.modify(update(input))
+      }
+      s <- State.get
+    yield (s.coins, s.candies)
+
+  def update(i: Input)(s: Machine): Machine =
+    (i, s) match
+      case (_, Machine(_, 0, _)) => s
+      case (Input.Coin, Machine(true, candy, coin)) =>
+        Machine(false, candy, coin + 1)
+      case (Input.Turn, Machine(false, candy, coin)) =>
+        Machine(true, candy - 1, coin)
+      case (_, _) => s
