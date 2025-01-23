@@ -6,4 +6,4 @@ ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(name = Some("Build proje
 
 ThisBuild / scalacOptions ++= List("-feature", "-deprecation", "-Ykind-projector:underscores", "-source:future")
 
-ThisBuild / libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test
+ThisBuild / libraryDependencies += "org.scalameta" %% "munit" % "1.1.0" % Test
