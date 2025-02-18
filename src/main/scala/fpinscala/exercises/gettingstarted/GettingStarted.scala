@@ -1,7 +1,10 @@
 package fpinscala.exercises.gettingstarted
 
+import scala.annotation.tailrec
+
 // A comment!
 /* Another comment */
+
 /** A documentation comment */
 object MyProgram:
   def abs(n: Int): Int =
@@ -12,15 +15,15 @@ object MyProgram:
     val msg = "The absolute value of %d is %d"
     msg.format(x, abs(x))
 
-  @main def printAbs: Unit =
+  @main def printAbs(): Unit =
     println(formatAbs(-42))
 
   // A definition of factorial, using a local, tail recursive function
   def factorial(n: Int): Int =
-    @annotation.tailrec
+    @tailrec
     def go(n: Int, acc: Int): Int =
       if n <= 0 then acc
-      else go(n-1, n*acc)
+      else go(n - 1, n * acc)
 
     go(n, 1)
 
@@ -28,12 +31,16 @@ object MyProgram:
   def factorial2(n: Int): Int =
     var acc = 1
     var i = n
-    while i > 0 do { acc *= i; i -= 1 }
+    while i > 0 do {
+      acc *= i
+      i -= 1
+    }
     acc
 
   // Exercise 1: Write a function to compute the nth fibonacci number
 
-  def fib(n: Int): Int = ???
+  def fib(n: Int): Int =
+    if n <= 1 then n else fib(n - 1) + fib(n - 2)
 
   // This definition and `formatAbs` are very similar..
   private def formatFactorial(n: Int) =
@@ -42,7 +49,7 @@ object MyProgram:
 
   // We can generalize `formatAbs` and `formatFactorial` to
   // accept a _function_ as a parameter
-  def formatResult(name: String, n: Int, f: Int => Int) =
+  def formatResult(name: String, n: Int, f: Int => Int): String =
     val msg = "The %s of %d is %d."
     msg.format(name, n, f(n))
 
@@ -52,7 +59,7 @@ object FormatAbsAndFactorial:
 
   // Now we can use our general `formatResult` function
   // with both `abs` and `factorial`
-  @main def printAbsAndFactorial: Unit =
+  @main def printAbsAndFactorial(): Unit =
     println(formatResult("absolute value", -42, abs))
     println(formatResult("factorial", 7, factorial))
 
@@ -61,7 +68,7 @@ object TestFib:
   import MyProgram.*
 
   // test implementation of `fib`
-  @main def printFib: Unit =
+  @main def printFib(): Unit =
     println("Expected: 0, 1, 1, 2, 3, 5, 8")
     println("Actual:   %d, %d, %d, %d, %d, %d, %d".format(fib(0), fib(1), fib(2), fib(3), fib(4), fib(5), fib(6)))
 
@@ -73,31 +80,33 @@ object AnonymousFunctions:
   import MyProgram.*
 
   // Some examples of anonymous functions:
-  @main def printAnonymousFunctions: Unit =
+  @main def printAnonymousFunctions(): Unit =
     println(formatResult("absolute value", -42, abs))
     println(formatResult("factorial", 7, factorial))
     println(formatResult("increment", 7, (x: Int) => x + 1))
     println(formatResult("increment2", 7, (x) => x + 1))
     println(formatResult("increment3", 7, x => x + 1))
     println(formatResult("increment4", 7, _ + 1))
-    println(formatResult("increment5", 7, x => { val r = x + 1; r }))
+    println(formatResult("increment5", 7, x => {
+      val r = x + 1
+      r
+    }))
 
-object MonomorphicBinarySearch:
-
+object MonomorphicLinearSearch:
 
   // First, a findFirst, specialized to `String`.
   // Ideally, we could generalize this to work for any `Array` type.
   def findFirst(ss: Array[String], key: String): Int =
     @annotation.tailrec
-    def loop(n: Int): Int =
-      // If `n` is past the end of the array, return `-1`
+    def loop(i: Int): Int =
+      // If `i` is past the end of the array, return `-1`
       // indicating the key doesn't exist in the array.
-      if n >= ss.length then -1
-      // `ss(n)` extracts the n'th element of the array `ss`.
-      // If the element at `n` is equal to the key, return `n`
+      if i >= ss.length then -1
+      // `ss(i)` extracts the i'th element of the array `ss`.
+      // If the element at `i` is equal to the key, return `i`
       // indicating that the element appears in the array at that index.
-      else if ss(n) == key then n
-      else loop(n + 1) // Otherwise increment `n` and keep looking.
+      else if ss(i) == key then i
+      else loop(i + 1) // Otherwise increment `i` and keep looking.
     // Start the loop at the first element of the array.
     loop(0)
 
@@ -110,37 +119,46 @@ object PolymorphicFunctions:
   // we take a function with which to test each element of the array.
   def findFirst[A](as: Array[A], p: A => Boolean): Int =
     @annotation.tailrec
-    def loop(n: Int): Int =
-      if n >= as.length then -1
+    def loop(i: Int): Int =
+      if i >= as.length then -1
       // If the function `p` matches the current element,
       // we've found a match and we return its index in the array.
-      else if p(as(n)) then n
-      else loop(n + 1)
+      else if p(as(i)) then i
+      else loop(i + 1)
 
     loop(0)
 
+  def findFirstOriginal(ss: Array[String], key: String): Int =
+    findFirst(ss, _ == key)
+
   // Exercise 2: Implement a polymorphic function to check whether
   // an `Array[A]` is sorted
-  def isSorted[A](as: Array[A], gt: (A, A) => Boolean): Boolean = ???
+  def isSorted[A](as: Array[A], gt: (A, A) => Boolean): Boolean =
+    @tailrec
+    def go(i : Int): Boolean =
+      if i + 1 >= as.length then true
+      else if gt(as(i), as(i + 1)) then false
+      else go(i + 1)
+    go(0)
 
   // Polymorphic functions are often so constrained by their type
   // that they only have one implementation! Here's an example:
 
-  def partial1[A,B,C](a: A, f: (A, B) => C): B => C =
+  def partial1[A, B, C](a: A, f: (A, B) => C): B => C =
     (b: B) => f(a, b)
 
   // Exercise 3: Implement `curry`.
 
   // Note that `=>` associates to the right, so we could
   // write the return type as `A => B => C`
-  def curry[A,B,C](f: (A, B) => C): A => (B => C) =
-    ???
+  def curry[A, B, C](f: (A, B) => C): A => (B => C) =
+    (a: A) => (b: B) => f(a, b)
 
   // NB: The `Function2` trait has a `curried` method already
 
   // Exercise 4: Implement `uncurry`
-  def uncurry[A,B,C](f: A => B => C): (A, B) => C =
-    ???
+  def uncurry[A, B, C](f: A => B => C): (A, B) => C =
+    (a: A, b: B) => f(a)(b)
 
   /*
   NB: There is a method on the `Function` object in the standard library,
@@ -154,6 +172,6 @@ object PolymorphicFunctions:
 
   // Exercise 5: Implement `compose`
 
-  def compose[A,B,C](f: B => C, g: A => B): A => C =
+  def compose[A, B, C](f: B => C, g: A => B): A => C =
     ???
 
