@@ -27,6 +27,7 @@ class GettingStartedSuite extends PropSuite:
       .toArray
 
   test("MyProgram.factorial")(Gen.smallInt): n =>
+    println(n)
     assertEquals(factorial(n), (1 to n).product)
 
   test("MyProgram.fib")(genLengthOfFibonacciSeq): i =>

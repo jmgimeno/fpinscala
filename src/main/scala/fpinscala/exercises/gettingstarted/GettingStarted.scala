@@ -145,7 +145,11 @@ object PolymorphicFunctions:
   // that they only have one implementation! Here's an example:
 
   def partial1[A, B, C](a: A, f: (A, B) => C): B => C =
-    (b: B) => f(a, b)
+    //                 ---------------------   ------
+    //                      el que tinc        el que he de construir
+    (b: B) => f(a, b) // necessito una A i una B
+    //....
+    //el que tinc
 
   // Exercise 3: Implement `curry`.
 
@@ -173,5 +177,4 @@ object PolymorphicFunctions:
   // Exercise 5: Implement `compose`
 
   def compose[A, B, C](f: B => C, g: A => B): A => C =
-    ???
-
+    (a: A) => f(g(a))

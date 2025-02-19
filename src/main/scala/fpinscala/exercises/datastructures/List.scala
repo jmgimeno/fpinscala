@@ -17,6 +17,7 @@ object List: // `List` companion object. Contains functions for creating and wor
   def product(doubles: List[Double]): Double = doubles match
     case Nil => 1.0
     case Cons(0.0, _) => 0.0
+    // case Cons(x, _) if x == 0.0 => 0.0
     case Cons(x,xs) => x * product(xs)
 
   def apply[A](as: A*): List[A] = // Variadic function syntax
@@ -57,6 +58,8 @@ object List: // `List` companion object. Contains functions for creating and wor
 
   def init[A](l: List[A]): List[A] = ???
 
+  // -------------------------------------
+
   def length[A](l: List[A]): Int = ???
 
   def foldLeft[A,B](l: List[A], acc: B, f: (B, A) => B): B = ???
@@ -89,4 +92,5 @@ object List: // `List` companion object. Contains functions for creating and wor
 
   // def zipWith - TODO determine signature
 
+  // Hint: use an auxiliar function to determine if sub is a prefix of a list.
   def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = ???
