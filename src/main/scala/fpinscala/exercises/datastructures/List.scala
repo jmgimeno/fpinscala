@@ -25,7 +25,7 @@ object List: // `List` companion object. Contains functions for creating and wor
     else Cons(as.head, apply(as.tail*))
 
   @annotation.nowarn // Scala gives a hint here via a warning, so let's disable that
-  val result = List(1,2,3,4,5) match
+  val result: Int = List(1,2,3,4,5) match
     case Cons(x, Cons(2, Cons(4, _))) => x
     case Nil => 42
     case Cons(x, Cons(y, Cons(3, Cons(4, _)))) => x + y
