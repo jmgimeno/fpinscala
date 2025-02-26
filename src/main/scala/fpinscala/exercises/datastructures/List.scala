@@ -42,7 +42,7 @@ object List: // `List` companion object. Contains functions for creating and wor
   def foldRight[A, B](as: List[A], acc: B, f: (A, B) => B): B = // Utility functions
     as match
       case Nil => acc
-      case Cons(x, xs) => f(x, foldRight(xs, acc, f))
+      case Cons(h, t) => f(h, foldRight(t, acc, f))
 
   def sumViaFoldRight(ns: List[Int]): Int =
     foldRight(ns, 0, (x, y) => x + y)
@@ -78,24 +78,62 @@ object List: // `List` companion object. Contains functions for creating and wor
   // -------------------------------------
 
   def length[A](l: List[A]): Int =
-//    l match
-//    case List.Nil => 0
-//    case List.Cons(_, tail          ) =>  1 + length(tail)
-    foldRight(l, 0, (_, length_of_tail) =>  1 + length_of_tail)
+    //    l match
+    //    case List.Nil => 0
+    //    case List.Cons(_, tail          ) =>  1 + length(tail)
+    foldRight(l, 0, (_, length_of_tail) => 1 + length_of_tail)
 
-  def foldLeft[A, B](l: List[A], acc: B, f: (B, A) => B): B = ???
+  @tailrec
+  def foldLeft[A, B](l: List[A], acc: B, f: (B, A) => B): B = l match
+    case List.Nil => acc
+    case List.Cons(head, tail) => foldLeft(tail, f(acc, head), f)
 
-  def sumViaFoldLeft(ns: List[Int]): Int = ???
+  def foldLeftIterative[A, B](l: List[A], acc: B, f: (B, A) => B): B =
 
-  def productViaFoldLeft(ns: List[Double]): Double = ???
+    def head(l: List[A]): A = l match
+      case List.Nil => sys.error("head of empty list")
+      case List.Cons(head, _) => head
 
-  def lengthViaFoldLeft[A](l: List[A]): Int = ???
+    var result: B = acc
+    var lst: List[A] = l
+    while lst != List.Nil do
+      val current: A = head(lst)
+      result = f(result, current)
+      lst = tail(lst)
+    result
 
-  def reverse[A](l: List[A]): List[A] = ???
+  def sumViaFoldLeft(ns: List[Int]): Int =
+    foldLeft(ns, 0, (sum_of_initial_part, current) => sum_of_initial_part + current)
 
-  def appendViaFoldRight[A](l: List[A], r: List[A]): List[A] = ???
+  def productViaFoldLeft(ns: List[Double]): Double =
+    foldLeft(ns, 1.0, (product_of_initial_part, current) => product_of_initial_part * current)
 
-  def concat[A](l: List[List[A]]): List[A] = ???
+  def lengthViaFoldLeft[A](l: List[A]): Int =
+    foldLeft(l, 0, (length_of_initial_part, _) => length_of_initial_part + 1)
+
+  def reverse[A](l: List[A]): List[A] =
+    foldLeft(l, List.Nil: List[A], (result_reverse_init, head) => List.Cons(head, result_reverse_init))
+
+  // NOTES IMPORTANTS:
+  // Recordeu els problemes de recursivitat de Programació 2
+  // - resoldre pel prefix -> foldLeft
+  // - resoldre pel sufix -> foldRight
+  //
+  // El foldRight original aplica la f a la tornada de les crides; la recursivitat serveix només
+  // per tenir a la pila els elements en l'ordre invertit; per tant, les crides recursives (des de
+  // la llista inicial fins a la buida) fan el mateix que el reverse, i la tornada d'aquestes,
+  // que va aplicant les f's en ordre invers dels elements, el mateix que fa el foldLeft sobre la
+  // invertida.
+  def foldRightViaFoldLeft[A, B](l: List[A], acc: B, f: (A, B) => B): B =
+    foldLeft(reverse(l), acc, (resultat_init, head) => f(head, resultat_init))
+
+  def appendViaFoldRight[A](l: List[A], r: List[A]): List[A] =
+    foldRight(l, r, List.Cons.apply)
+
+  def concat[A](l: List[List[A]]): List[A] =
+    foldRight(l,List.Nil: List[A],(head,result_concat_tail) => append(head,result_concat_tail))
+  // with foldLeft is possible but quadratic number of copies (with foldRight is linear)
+  // foldLeft(l, List.Nil: List[A],(result_concat_init, head) => append(result_concat_init, head)
 
   def incrementEach(l: List[Int]): List[Int] = ???
 
