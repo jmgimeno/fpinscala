@@ -158,4 +158,4 @@ object List: // `List` companion object. Contains functions for creating and wor
 
   def foldRightViaFoldLeftAlt[A, B](l: List[A], acc: B, f: (A, B) => B): B = ???
 
-  def foldLeftViaFoldRight[A, B](l: List[A], acc: B, f: (A, B) => B): B = ???
+  def foldLeftViaFoldRight[A, B](l: List[A], acc: B, f: (B, A) => B): B = ???
