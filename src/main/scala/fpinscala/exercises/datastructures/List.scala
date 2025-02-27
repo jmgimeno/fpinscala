@@ -103,16 +103,24 @@ object List: // `List` companion object. Contains functions for creating and wor
     result
 
   def sumViaFoldLeft(ns: List[Int]): Int =
-    foldLeft(ns, 0, (sum_of_initial_part, current) => sum_of_initial_part + current)
+    foldLeft(ns, 0, (sum_of_initial_part, current) =>
+      sum_of_initial_part + current
+    )
 
   def productViaFoldLeft(ns: List[Double]): Double =
-    foldLeft(ns, 1.0, (product_of_initial_part, current) => product_of_initial_part * current)
+    foldLeft(ns, 1.0, (product_of_initial_part, current) =>
+      product_of_initial_part * current
+    )
 
   def lengthViaFoldLeft[A](l: List[A]): Int =
-    foldLeft(l, 0, (length_of_initial_part, _) => length_of_initial_part + 1)
+    foldLeft(l, 0, (length_of_initial_part, _) =>
+      length_of_initial_part + 1
+    )
 
   def reverse[A](l: List[A]): List[A] =
-    foldLeft(l, List.Nil: List[A], (result_reverse_init, head) => List.Cons(head, result_reverse_init))
+    foldLeft(l, List.Nil: List[A], (result_reverse_init, head) =>
+      List.Cons(head, result_reverse_init)
+    )
 
   // NOTES IMPORTANTS:
   // Recordeu els problemes de recursivitat de Programació 2
@@ -125,31 +133,73 @@ object List: // `List` companion object. Contains functions for creating and wor
   // que va aplicant les f's en ordre invers dels elements, el mateix que fa el foldLeft sobre la
   // invertida.
   def foldRightViaFoldLeft[A, B](l: List[A], acc: B, f: (A, B) => B): B =
-    foldLeft(reverse(l), acc, (resultat_init, head) => f(head, resultat_init))
+    foldLeft(reverse(l), acc, (resultat_init, head) =>
+      f(head, resultat_init)
+    )
 
   def appendViaFoldRight[A](l: List[A], r: List[A]): List[A] =
     foldRight(l, r, List.Cons.apply)
 
   def concat[A](l: List[List[A]]): List[A] =
-    foldRight(l,List.Nil: List[A],(head,result_concat_tail) => append(head,result_concat_tail))
+    foldRight(l, List.Nil: List[A], (head, result_concat_tail) =>
+      append(head, result_concat_tail)
+    )
   // with foldLeft is possible but quadratic number of copies (with foldRight is linear)
   // foldLeft(l, List.Nil: List[A],(result_concat_init, head) => append(result_concat_init, head)
 
-  def incrementEach(l: List[Int]): List[Int] = ???
+  def incrementEach(l: List[Int]): List[Int] = l match
+    case List.Nil => List.Nil
+    case List.Cons(head, tail) => List.Cons(head + 1, incrementEach(tail))
 
-  def doubleToString(l: List[Double]): List[String] = ???
+  def incrementEachViaFoldRight(l: List[Int]): List[Int] =
+    foldRight(l, List.Nil: List[Int], (head, increment_tail) =>
+      List.Cons(head + 1, increment_tail)
+    )
 
-  def map[A, B](l: List[A], f: A => B): List[B] = ???
+  def doubleToString(l: List[Double]): List[String] =
+    foldRight(l, List.Nil: List[String], (head, doubleToString_tail) =>
+      List.Cons(head.toString, doubleToString_tail)
+    )
 
-  def filter[A](as: List[A], f: A => Boolean): List[A] = ???
+  def map[A, B](l: List[A], f: A => B): List[B] =
+    foldRight(l, List.Nil: List[B], (head, map_tail) =>
+      List.Cons(f(head), map_tail)
+    )
 
-  def flatMap[A, B](as: List[A], f: A => List[B]): List[B] = ???
+  def incrementViaMap(l: List[Int]): List[Int] = map(l, _ + 1)
 
-  def filterViaFlatMap[A](as: List[A], f: A => Boolean): List[A] = ???
+  def doubleToStringViaMap(l: List[Double]): List[String] = map(l, _.toString)
 
-  def addPairwise(a: List[Int], b: List[Int]): List[Int] = ???
+  def filter[A](as: List[A], f: A => Boolean): List[A] =
+    foldRight(as, List.Nil: List[A], (head, filter_tail) =>
+      if f(head)
+      then List.Cons(head, filter_tail)
+      else filter_tail
+    )
+
+  def flatMap[A, B](as: List[A], f: A => List[B]): List[B] =
+    foldRight(as, List.Nil: List[B], (head, flatMap_tail) =>
+      append(f(head), flatMap_tail)
+    )
+
+  def filterViaFlatMap[A](as: List[A], f: A => Boolean): List[A] =
+    flatMap(as, (a: A) =>
+      if f(a)
+      then List.Cons(a, Nil)
+      else List.Nil
+    )
+
+  def addPairwise(a: List[Int], b: List[Int]): List[Int] = (a, b) match
+    case (List.Cons(ha, ta), List.Cons(hb, tb)) => List.Cons(ha + hb, addPairwise(ta, tb))
+    case _ => List.Nil
 
   // def zipWith - TODO determine signature
+  def zipWith[A,B,C](a: List[A], b: List[B], f: (A, B) => C): List[C] = (a, b) match
+    case (List.Cons(ha, ta), List.Cons(hb, tb)) => List.Cons(f(ha, hb), zipWith(ta, tb, f))
+    case _ => List.Nil
+
+  def addPairWiseViaZipWith(a: List[Int], b: List[Int]): List[Int] =
+    zipWith(a, b, _ + _)
 
   // HARD:
   // - These implementations have only theoretical interest to deepen the understanding of folds,
@@ -159,3 +209,6 @@ object List: // `List` companion object. Contains functions for creating and wor
   def foldRightViaFoldLeftAlt[A, B](l: List[A], acc: B, f: (A, B) => B): B = ???
 
   def foldLeftViaFoldRight[A, B](l: List[A], acc: B, f: (B, A) => B): B = ???
+
+  // Hint: use an auxiliar function to determine if sub is a prefix of a list.
+  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = ???

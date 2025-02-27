@@ -29,8 +29,10 @@ object ListAndOrderings {
 
   @main def main1(): Unit = {
     val l = List(3, 4, 1, 2, 5)
-    val m = min1(l, Ordering.Int)
-    println(s"The min of $l is $m ")
+    val min = min1(l, Ordering.Int)
+    println(s"The min of $l is $min ")
+    val max = min1(l, Ordering.Int.reverse)
+    println(s"The max of $l is $max ")
   }
 
   // ------------------------------------------------------------------------
@@ -54,8 +56,10 @@ object ListAndOrderings {
 
   @main def main2(): Unit = {
     val l = List(3, 4, 1, 2, 5)
-    val m = min2(l)(Ordering.Int)
-    println(s"The min of $l is $m ")
+    val min = min2(l)(Ordering.Int)
+    println(s"The min of $l is $min ")
+    val max = min2(l)(Ordering.Int.reverse)
+    println(s"The max of $l is $max ")
   }
 
   // ------------------------------------------------------------------------
@@ -87,6 +91,7 @@ object ListAndOrderings {
     // the criteria)
     val l = List(3, 4, 1, 2, 5)
     val min = min3(l)
+    val l2 = List("a", "b")
     println(s"The min of $l is $min ")
     val max = min3(l)(using Ordering.Int.reverse)
     println(s"The max of $l is $max ")
