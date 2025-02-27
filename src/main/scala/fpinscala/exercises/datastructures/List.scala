@@ -151,5 +151,11 @@ object List: // `List` companion object. Contains functions for creating and wor
 
   // def zipWith - TODO determine signature
 
-  // Hint: use an auxiliar function to determine if sub is a prefix of a list.
-  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = ???
+  // HARD:
+  // - These implementations have only theoretical interest to deepen the understanding of folds,
+  // recursion and functions.
+  // - Hint: in both solutions we "grow" a function that, given the value of acc gets the result
+
+  def foldRightViaFoldLeftAlt[A, B](l: List[A], acc: B, f: (A, B) => B): B = ???
+
+  def foldLeftViaFoldRight[A, B](l: List[A], acc: B, f: (A, B) => B): B = ???
