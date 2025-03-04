@@ -161,8 +161,8 @@ object List: // `List` companion object. Contains functions for creating and wor
       List.Cons(head.toString, doubleToString_tail)
     )
 
-  def map[A, B](l: List[A], f: A => B): List[B] =
-    foldRight(l, List.Nil: List[B], (head, map_tail) =>
+  def map[A, B](l: List[A], f: A => B): List[B] = 
+      foldRight(l, List.Nil: List[B], (head, map_tail) =>
       List.Cons(f(head), map_tail)
     )
 
