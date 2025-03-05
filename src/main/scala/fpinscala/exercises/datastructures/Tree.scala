@@ -26,7 +26,8 @@ enum Tree[+A]:
   def depthViaFold: Int =
     this.fold(_ => 0, (depth_of_l, depth_of_r) => 1 + math.max(depth_of_l, depth_of_r))
 
-  def mapViaFold[B](f: A => B): Tree[B] = ???
+  def mapViaFold[B](f: A => B): Tree[B] =
+    this.fold(a => Leaf(f(a)), (map_of_l, map_of_r) => Branch(map_of_l, map_of_r))
 
 object Tree:
 
@@ -39,6 +40,10 @@ object Tree:
       case Leaf(i) => if i > 0 then Some(i) else None
       case Branch(l, r) => l.firstPositive orElse r.firstPositive
 
-  extension (t: Tree[Int]) def maximum: Int = ???
+  extension (t: Tree[Int]) def maximum: Int = t match
+    case Leaf(a) => a
+    case Branch(l,r) => math.max(l.maximum, r.maximum)
 
-  extension (t: Tree[Int]) def maximumViaFold: Int = ???
+  extension (t: Tree[Int]) def maximumViaFold: Int =
+    t.fold(a => a, (max_of_l, max_of_r) => math.max(max_of_l, max_of_r))
+    //t.fold(identity, math.max)
