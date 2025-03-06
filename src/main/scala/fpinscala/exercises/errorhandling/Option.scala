@@ -8,19 +8,33 @@ enum Option[+A]:
   case Some(get: A)
   case None
 
-  def map[B](f: A => B): Option[B] = ???
+  def map[B](f: A => B): Option[B] = this match
+    case Option.Some(get) => Some(f(get))
+    case Option.None => None
+
+  def flatMap[B](f: A => Option[B]): Option[B] = this match
+    case Option.Some(get) => f(get)
+    case Option.None => None
 
   // NOTE:
   // def getOrElse(default: => A): A = ???
   // Covariant type A occurs in contravariant position in type A of value default
   // Why?
-  def getOrElse[B >: A](default: => B): B = ???
 
-  def flatMap[B](f: A => Option[B]): Option[B] = ???
+  // NOTE:
+  // => means call-by-name (instead of the 'normal' call-by-value)
+  def getOrElse[B >: A](default: =>
+  B): B = this match
+    case Option.Some(get) => get
+    case Option.None => default
 
-  def orElse[B >: A](ob: => Option[B]): Option[B] = ???
+  def orElse[B >: A](ob: => Option[B]): Option[B] = this match
+    case Option.Some(get) => this
+    case Option.None => ob
 
-  def filter(f: A => Boolean): Option[A] = ???
+  def filter(f: A => Boolean): Option[A] = this match
+    case Option.Some(get) if f(get) => this 
+    case _ => Option.None
 
 object Option:
 
