@@ -33,7 +33,7 @@ enum Option[+A]:
     case Option.None => ob
 
   def filter(f: A => Boolean): Option[A] = this match
-    case Option.Some(get) if f(get) => this 
+    case Option.Some(get) if f(get) => this
     case _ => Option.None
 
 object Option:
@@ -61,10 +61,52 @@ object Option:
     if xs.isEmpty then None
     else Some(xs.sum / xs.length)
 
-  def variance(xs: Seq[Double]): Option[Double] = ???
+  def variance(xs: Seq[Double]): Option[Double] =
+    mean(xs) match
+      case Option.None => Option.None
+      case Option.Some(mu) =>
+        val squaredDiff = xs.map(x => (x - mu) * (x - mu))
+        mean(squaredDiff)
 
-  def map2[A, B, C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = ???
+  def variance_2(xs: Seq[Double]): Option[Double] =
+    mean(xs).flatMap { mu =>
+      val squaredDiff = xs.map(x => (x - mu) * (x - mu))
+      mean(squaredDiff)
+    }
 
-  def sequence[A](as: List[Option[A]]): Option[List[A]] = ???
+  def variance_3(xs: Seq[Double]): Option[Double] = ???
+
+  def lift[A, B](f: A => B): Option[A] => Option[B] = _.map(f)
+
+  def map2[A, B, C](oa: Option[A], ob: Option[B])(f: (A, B) => C): Option[C] =
+    (oa, ob) match
+      case (Some(a), Some(b)) => Some(f(a, b))
+      case _ => None
+
+  def map2_2[A, B, C](oa: Option[A], ob: Option[B])(f: (A, B) => C): Option[C] =
+    oa.flatMap { a =>
+      ob.map { b =>
+        f(a, b)
+      }
+    }
+
+  def map2_3[A, B, C](oa: Option[A], ob: Option[B])(f: (A, B) => C): Option[C] =
+    // for-comprehension
+    for {
+      a <- oa
+      b <- ob
+    } yield f(a, b)
+
+  // * Programació imperativa
+  // val a = oa
+  // val b = ob
+  // f(a, b)
+
+  // define lift2
+
+  def sequence[A](as: List[Option[A]]): Option[List[A]] =
+    as.foldRight(Some(Nil)) { (oa: Option[A], oas: Option[List[A]]) =>
+      map2(oa, oas)(_ :: _)
+    }
 
   def traverse[A, B](as: List[A])(f: A => Option[B]): Option[List[B]] = ???
