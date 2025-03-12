@@ -8,13 +8,29 @@ enum Either[+E,+A]:
   case Left(get: E)
   case Right(get: A)
 
-  def map[B](f: A => B): Either[E, B] = ???
+  def map[B](f: A => B): Either[E, B] = this match
+    case Left(e) => Left(e)
+    case Right(a) => Right(f(a))
 
-  def flatMap[EE >: E, B](f: A => Either[EE, B]): Either[EE, B] = ???
+  def flatMap[EE >: E, B](f: A => Either[EE, B]): Either[EE, B] = this match
+    case Left(e) => Left(e)
+    case Right(a) => f(a)
 
-  def orElse[EE >: E, B >: A](b: => Either[EE, B]): Either[EE, B] = ???
+  def orElse[EE >: E, B >: A](b: => Either[EE, B]): Either[EE, B] = this match
+    case Left(_) => b
+    case Right(_) => this
 
-  def map2[EE >: E, B, C](b: Either[EE, B])(f: (A, B) => C): Either[EE, C] = ???
+  def map2[EE >: E, B, C](eeb: Either[EE, B])(f: (A, B) => C): Either[EE, C] =
+    (this, eeb) match
+      case (Right(a) ,Right(b)) => Right(f(a,b))
+      case (Left(e), _) => Left(e)
+      case (_, Left(ee)) => Left(ee)
+
+  def map2_2[EE >: E, B, C](eeb: Either[EE, B])(f: (A, B) => C): Either[EE, C] =
+    for {
+      a <- this
+      b <- eeb
+    } yield f(a, b)
 
 object Either:
   def traverse[E,A,B](es: List[A])(f: A => Either[E, B]): Either[E, List[B]] = ???
