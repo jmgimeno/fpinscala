@@ -1,10 +1,11 @@
 package fpinscala.exercises.errorhandling
 
 // Hide std library `Either` since we are writing our own in this chapter
+
 import scala.{Either as _, Left as _, Right as _}
 import scala.util.control.NonFatal
 
-enum Either[+E,+A]:
+enum Either[+E, +A]:
   case Left(get: E)
   case Right(get: A)
 
@@ -22,7 +23,7 @@ enum Either[+E,+A]:
 
   def map2[EE >: E, B, C](eeb: Either[EE, B])(f: (A, B) => C): Either[EE, C] =
     (this, eeb) match
-      case (Right(a) ,Right(b)) => Right(f(a,b))
+      case (Right(a), Right(b)) => Right(f(a, b))
       case (Left(e), _) => Left(e)
       case (_, Left(ee)) => Left(ee)
 
@@ -33,17 +34,17 @@ enum Either[+E,+A]:
     } yield f(a, b)
 
 object Either:
-  def traverse[E,A,B](es: List[A])(f: A => Either[E, B]): Either[E, List[B]] = ???
+  def traverse[E, A, B](es: List[A])(f: A => Either[E, B]): Either[E, List[B]] = ???
 
-  def sequence[E,A](es: List[Either[E,A]]): Either[E,List[A]] = ???
+  def sequence[E, A](es: List[Either[E, A]]): Either[E, List[A]] = ???
 
-  def mean(xs: IndexedSeq[Double]): Either[String, Double] = 
+  def mean(xs: IndexedSeq[Double]): Either[String, Double] =
     if xs.isEmpty then
       Left("mean of empty list!")
-    else 
+    else
       Right(xs.sum / xs.length)
 
-  def safeDiv(x: Int, y: Int): Either[Throwable, Int] = 
+  def safeDiv(x: Int, y: Int): Either[Throwable, Int] =
     try Right(x / y)
     catch case NonFatal(t) => Left(t)
 
@@ -51,7 +52,13 @@ object Either:
     try Right(a)
     catch case NonFatal(t) => Left(t)
 
-  def map2All[E, A, B, C](a: Either[List[E], A], b: Either[List[E], B], f: (A, B) => C): Either[List[E], C] = ???
+  def map2All[E, A, B, C](a: Either[List[E], A], b: Either[List[E], B], f: (A, B) => C): Either[List[E], C] =
+    (a, b) match
+      case (Right(aa), Right(bb)) => Right(f(aa, bb))
+      case (Left(ea), Right(_)) => Left(ea)
+      case (Right(_), Left(eb)) => Left(eb)
+      case (Left(ea), Left(eb)) => Left(ea ++ eb)
+
 
   def traverseAll[E, A, B](as: List[A], f: A => Either[List[E], B]): Either[List[E], List[B]] = ???
 
