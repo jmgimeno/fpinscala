@@ -34,9 +34,17 @@ enum Either[+E, +A]:
     } yield f(a, b)
 
 object Either:
-  def traverse[E, A, B](es: List[A])(f: A => Either[E, B]): Either[E, List[B]] = ???
+  def traverse[E, A, B](as: List[A])(f: A => Either[E, B]): Either[E, List[B]] =
+    as.foldRight(Right(Nil)) { (a: A, acc: Either[E, List[B]]) =>
+//      f(a).map2(acc)(_ :: _)
+      val eb: Either[E, B] = f(a)
+      eb.map2(acc) { (b: B, bs: List[B]) =>
+        b :: bs
+      }
+    } 
 
-  def sequence[E, A](es: List[Either[E, A]]): Either[E, List[A]] = ???
+  def sequence[E, A](es: List[Either[E, A]]): Either[E, List[A]] =
+    traverse(es)((eea: Either[E, A]) => eea: Either[E, A])
 
   def mean(xs: IndexedSeq[Double]): Either[String, Double] =
     if xs.isEmpty then
