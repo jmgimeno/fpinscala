@@ -1,17 +1,28 @@
 
-def f[A, B, C](a: => A, b: => B, g: (A, B) => C): C =
+def secondByValue[A, B](a: A, b: B): A = a
+
+def secondByName[A, B](a: A, b: => B): A = a
+
+def paramLambdaByValue[A, B, C](a: => A, b: => B, g: (A, B) => A): A =
   g(a, b)
 
-f(sys.error("a"), sys.error("b"), (a, b) => a)
-f(12, sys.error("b"), (a, b) => a)
+//paramLambdaByValue(sys.error("a"), sys.error("b"), (a, b) => a)
+//paramLambdaByValue(12, sys.error("b"), (a, b) => a)
+//paramLambdaByValue(12, sys.error("b"), secondByValue)
+//paramLambdaByValue(12, sys.error("b"), secondByName)
 
-def f2[A, B, C](a: => A, b: => B, g: (A, => B) => C): C =
+def paramLambdaByName[A, B, C](a: => A, b: => B, g: (A, => B) => C): C =
   g(a, b)
 
-f2(sys.error("a"), sys.error("b"), (a, b) => a)
-f2(12, sys.error("b"), (a, b) => a)
+//paramLambdaByName(sys.error("a"), sys.error("b"), (a, b) => a)
+//paramLambdaByName(12, sys.error("b"), (a, b) => a)
+//paramLambdaByName(12, sys.error("b"), secondByValue)
+//paramLambdaByName(12, sys.error("b"), secondByName)
 
-def f3[A, B, C](a: => A, b: => B, g: (=> A, => B) => C): C =
-  g(a, b)
+// Polimorphic lambdas (advanced)
+val lambda = [A, B] => (a: A, b: B) => a
 
-f3(sys.error("a"), sys.error("b"), (a, b) => 42)
+//paramLambdaByValue(12, sys.error("b"), lambda[Int, Any])
+//paramLambdaByName(12, sys.error("b"), lambda[Int, Any])
+
+

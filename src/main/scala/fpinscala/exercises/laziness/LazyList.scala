@@ -4,6 +4,14 @@ enum LazyList[+A]:
   case Empty
   case Cons(h: () => A, t: () => LazyList[A])
 
+  def headOption: Option[A] = this match
+    case LazyList.Empty => None
+    case LazyList.Cons(h, _) => Some(h())
+
+  def tailOption: Option[LazyList[A]] = this match
+    case LazyList.Empty => None
+    case LazyList.Cons(_, t) => Some(t())
+
   def toList: List[A] = ???
 
   // The arrow `=>` in front of the argument type `B` means that the function `f` takes
@@ -31,8 +39,6 @@ enum LazyList[+A]:
   def takeWhile(p: A => Boolean): LazyList[A] = ???
 
   def forAll(p: A => Boolean): Boolean = ???
-
-  def headOption: Option[A] = ???
 
   // 5.7 map, filter, append, flatmap using foldRight. Part of the exercise is
   // writing your own function signatures.
