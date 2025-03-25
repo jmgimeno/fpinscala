@@ -48,13 +48,19 @@ enum LazyList[+A]:
       LazyList.cons(h(), t().takeWhile(p))
     case _ => LazyList.empty
 
-  def forAll(p: A => Boolean): Boolean = ???
+  def forAll(p: A => Boolean): Boolean =
+    foldRight(true){ (a, forall_on_tail) => p(a) && forall_on_tail}
 
   // 5.7 map, filter, append, flatmap using foldRight. Part of the exercise is
   // writing your own function signatures.
 
-  def startsWith[B](s: LazyList[B]): Boolean = ???
+  def takeWhile_viaFoldRight(p: A => Boolean): LazyList[A] =
+    foldRight(LazyList.empty){ (a, takeWhile_on_tail) =>
+      if p(a) then LazyList.cons(a, takeWhile_on_tail)
+      else LazyList.empty
+    }
 
+  def startsWith[B](s: LazyList[B]): Boolean = ???
 
 object LazyList:
   def cons[A](hd: => A, tl: => LazyList[A]): LazyList[A] =

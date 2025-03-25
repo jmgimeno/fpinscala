@@ -5,6 +5,14 @@ val l_eager: LazyList[Int] = LazyList(1, sys.error("boom"), 2)
 
 val l_lazy: LazyList[Int] = cons(1, cons(sys.error("boom"), cons(2, empty)))
 
+l_lazy.headOption
+for {
+  rest <- l_lazy.tailOption
+  rest2 <- rest.tailOption
+  third <- rest2.headOption
+} yield third
+
+
 def f(n: Int): Int =
   println(s"f $n")
   n
@@ -52,8 +60,19 @@ val lazyList5 = cons(f(1), cons(f(2), cons(f(3), cons(f(4), empty))))
 lazyList5.forAll(_ < 3)
 
 val lazyList6 = cons(f(1), cons(f(2), cons(f(3), cons(f(4), empty))))
-val untilThree2 = lazyList6.takeWhile_viaFoldRight(_ < 3)
 
-untilThree2.headOption
+// val untilThree2 = lazyList6.takeWhile_viaFoldRight(_ < 3)
+// untilThree2.headOption
+// untilThree2.tailOption
 
-untilThree2.tailOption
+val anotherLL = cons(f(1), cons(f(2), cons(f(3), cons(f(4), empty))))
+
+anotherLL.forAll(_ < 2)
+anotherLL.forAll(_ < 2)
+
+val anotherLL2 = cons(f(1), cons(f(2), cons(f(3), cons(f(4), empty))))
+
+val tw = anotherLL2.takeWhile(_ <= 2)
+tw.headOption
+
+tw.toList
