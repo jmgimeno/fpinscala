@@ -4,6 +4,10 @@ enum LazyList[+A]:
   case Empty
   case Cons(h: () => A, t: () => LazyList[A])
 
+  def map[B](f: A => B): LazyList[B] = this match
+    case LazyList.Empty => LazyList.empty
+    case LazyList.Cons(h, t) => LazyList.cons(f(h()), t().map(f))
+
   def headOption: Option[A] = this match
     case LazyList.Empty => None
     case LazyList.Cons(h, _) => Some(h())
@@ -11,6 +15,10 @@ enum LazyList[+A]:
   def tailOption: Option[LazyList[A]] = this match
     case LazyList.Empty => None
     case LazyList.Cons(_, t) => Some(t())
+
+  def tail: LazyList[A] = this match
+    case LazyList.Cons(_, t) => t()
+    case _ => sys.error("tail of empty list")
 
   def toList: List[A] = this match
     case LazyList.Empty => Nil
@@ -61,29 +69,31 @@ enum LazyList[+A]:
     }
 
   def headOption_viaFoldRight: Option[A] =
-    foldRight(???) { (a, acc) =>
-      ???
+    foldRight(Option.empty) { (a, _) =>
+      Some(a)
     }
 
   def map_viaFoldRight[B](f: A => B): LazyList[B] =
-    foldRight(???) { (a, acc) =>
-      ???
+    foldRight(LazyList.empty) { (a, map_on_tail) =>
+      LazyList.cons(f(a), map_on_tail)
     }
 
   def filter_viaFoldRight(p: A => Boolean): LazyList[A] =
-    foldRight(???) { (a, acc) =>
-      ???
+    foldRight(LazyList.empty) { (a, filter_on_tail) =>
+      if p(a) then
+        LazyList.cons(a, filter_on_tail)
+      else
+        filter_on_tail
     }
 
   def append_viaFoldRight[A2 >: A](that: LazyList[A2]): LazyList[A2] =
-    foldRight(???) { (a, acc) =>
-      ???
+    this.foldRight(that) { (a, append_on_tail) =>
+      LazyList.cons(a, append_on_tail)
     }
 
-
   def flatMap_viaFoldRight[B](f: A => LazyList[B]): LazyList[B] =
-    foldRight(???) { (a, acc) =>
-      ???
+    foldRight(LazyList.empty) { (a, acc) =>
+      f(a).append_viaFoldRight(acc)
     }
 
   def startsWith[B](s: LazyList[B]): Boolean = ???
@@ -102,18 +112,34 @@ object LazyList:
 
   val ones: LazyList[Int] = LazyList.cons(1, ones)
 
-  def continually[A](a: A): LazyList[A] = ???
+  def continually[A](a: A): LazyList[A] =
+    LazyList.cons(a, continually(a))
 
-  def from(n: Int): LazyList[Int] = ???
+  def from(n: Int): LazyList[Int] =
+    LazyList.cons(n, from(n + 1))
 
-  lazy val fibs: LazyList[Int] = ???
+  def zipWith[A, B, C](as: LazyList[A], bs: LazyList[B])(f: (A, B) => C): LazyList[C] =
+    (as, bs) match
+      case (LazyList.Cons(ah, at), LazyList.Cons(bh, bt)) =>
+        LazyList.cons(f(ah(), bh()), zipWith(at(), bt())(f))
+      case _ => sys.error("only for infinite lazy lists")
 
-  def unfold[A, S](state: S)(f: S => Option[(A, S)]): LazyList[A] = ???
+  lazy val fibs: LazyList[Int] =
+    LazyList.cons(0, LazyList.cons(1, zipWith(fibs, fibs.tail)(_ + _)))
 
-  lazy val fibsViaUnfold: LazyList[Int] = ???
+  def unfold[A, S](state: S)(f: S => Option[(A, S)]): LazyList[A] =
+    f(state) match
+      case None => LazyList.empty
+      case Some((a, nextState)) => LazyList.cons(a, unfold(nextState)(f))
 
-  def fromViaUnfold(n: Int): LazyList[Int] = ???
+  lazy val fibsViaUnfold: LazyList[Int] =
+    unfold((0, 1)) { case (a, b) => Some((a, (b, a + b))) }
 
-  def continuallyViaUnfold[A](a: A): LazyList[A] = ???
+  def fromViaUnfold(n: Int): LazyList[Int] =
+    unfold(n)(n => Some((n, n + 1)))
 
-  lazy val onesViaUnfold: LazyList[Int] = ???
+  def continuallyViaUnfold[A](a: A): LazyList[A] =
+    unfold(())(_ => Some(a, ()))
+
+  lazy val onesViaUnfold: LazyList[Int] =
+    unfold(())(_ => Some(1, ()))

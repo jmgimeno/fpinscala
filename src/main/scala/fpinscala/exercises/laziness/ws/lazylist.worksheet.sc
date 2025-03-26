@@ -76,3 +76,7 @@ val tw = anotherLL2.takeWhile(_ <= 2)
 tw.headOption
 
 tw.toList
+
+fibs.take(10).toList
+
+fibsViaUnfold.take(10).toList
