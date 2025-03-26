@@ -60,6 +60,32 @@ enum LazyList[+A]:
       else LazyList.empty
     }
 
+  def headOption_viaFoldRight: Option[A] =
+    foldRight(???) { (a, acc) =>
+      ???
+    }
+
+  def map_viaFoldRight[B](f: A => B): LazyList[B] =
+    foldRight(???) { (a, acc) =>
+      ???
+    }
+
+  def filter_viaFoldRight(p: A => Boolean): LazyList[A] =
+    foldRight(???) { (a, acc) =>
+      ???
+    }
+
+  def append_viaFoldRight[A2 >: A](that: LazyList[A2]): LazyList[A2] =
+    foldRight(???) { (a, acc) =>
+      ???
+    }
+
+
+  def flatMap_viaFoldRight[B](f: A => LazyList[B]): LazyList[B] =
+    foldRight(???) { (a, acc) =>
+      ???
+    }
+
   def startsWith[B](s: LazyList[B]): Boolean = ???
 
 object LazyList:
