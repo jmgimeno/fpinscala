@@ -96,7 +96,33 @@ enum LazyList[+A]:
       f(a).append_viaFoldRight(acc)
     }
 
-  def startsWith[B](s: LazyList[B]): Boolean = ???
+  def map_viaUnfold[B](f: A => B): LazyList[B] =
+    LazyList.unfold(???) { state =>
+      ???
+    }
+
+  def take_viaUnfold[B](n: Int): LazyList[B] =
+    LazyList.unfold(???) { state =>
+      ???
+    }
+
+  def takeWhile_viaUnfold[B](p: A => Boolean): LazyList[B] =
+    LazyList.unfold(???) { state =>
+      ???
+    }
+
+  def zipWith_viaUnfold[B, C](that: LazyList[B])(f: (A, B) => C): LazyList[C] =
+    LazyList.unfold(???) { state =>
+      ???
+    }
+
+  def zipAll_viaUnfold[B](that: LazyList[B]): LazyList[(Option[A], Option[B])] =
+    LazyList.unfold(???) { state =>
+      ???
+    }
+
+  def startsWith[B >: A](prefix: LazyList[B]): Boolean =
+    zipAll_viaUnfold(prefix).takeWhile(_(1).isDefined).forAll((a1, a2) => a1 == a2)
 
 object LazyList:
   def cons[A](hd: => A, tl: => LazyList[A]): LazyList[A] =
@@ -143,3 +169,5 @@ object LazyList:
 
   lazy val onesViaUnfold: LazyList[Int] =
     unfold(())(_ => Some(1, ()))
+
+
