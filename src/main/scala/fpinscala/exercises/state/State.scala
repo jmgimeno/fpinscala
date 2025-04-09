@@ -1,5 +1,7 @@
 package fpinscala.exercises.state
 
+import scala.annotation.tailrec
+
 
 trait RNG:
   def nextInt: (Int, RNG) // Should generate a random `Int`. We'll later define other functions in terms of `nextInt`.
@@ -30,19 +32,69 @@ object RNG:
     val (n, rng2) = rng.nextInt
     (if n < 0 then -(n + 1) else n, rng2)
 
-  def double(rng: RNG): (Double, RNG) = ???
+  def double(rng: RNG): (Double, RNG) =
+    val (n, rng2) = nonNegativeInt(rng)
+    (n / (Int.MaxValue.toDouble + 1), rng2)
 
-  def intDouble(rng: RNG): ((Int,Double), RNG) = ???
+  def intDouble(rng: RNG): ((Int, Double), RNG) =
+    val (n, rng2) = rng.nextInt
+    val (d, rng3) = double(rng2)
+    ((n, d), rng3)
 
-  def doubleInt(rng: RNG): ((Double,Int), RNG) = ???
+  def doubleInt(rng: RNG): ((Double, Int), RNG) =
+    val (d, rng2) = double(rng)
+    val (n, rng3) = rng2.nextInt
+    ((d, n), rng3)
 
-  def double3(rng: RNG): ((Double,Double,Double), RNG) = ???
+  def double3(rng: RNG): ((Double, Double, Double), RNG) =
+    val (d1, rng2) = double(rng)
+    val (d2, rng3) = double(rng2)
+    val (d3, rng4) = double(rng3)
+    ((d1, d2, d3), rng4)
 
-  def ints(count: Int)(rng: RNG): (List[Int], RNG) = ???
+  // I do a reverse to have this property: the first generated element
+  // is the first element in the generated list
+  def ints(count: Int)(rng: RNG): (List[Int], RNG) =
+    @tailrec
+    def go(i: Int, acc: List[Int], rng: RNG): (List[Int], RNG) =
+      if i <= 0 then (acc.reverse, rng)
+      else
+        val (n, rng2) = rng.nextInt
+        go(i - 1, n :: acc, rng2)
 
-  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
+    go(count, Nil, rng)
 
-  def sequence[A](rs: List[Rand[A]]): Rand[List[A]] = ???
+  def ints2(count: Int)(rng: RNG): (List[Int], RNG) =
+    if count <= 0 then (Nil, rng)
+    else
+      val (n, rng2) = rng.nextInt
+      val (ns, rng3) = ints2(count - 1)(rng2)
+      (n :: ns, rng3)
+
+  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
+    rng => {
+      val (a, rng2) = ra(rng)
+      val (b, rng3) = rb(rng2)
+      (f(a, b), rng3)
+    }
+
+  def sequence[A](rs: List[Rand[A]]): Rand[List[A]] =
+    //   Rand[List[A]]    Rand[A]    Rand[List[A]]
+    rs.foldRight(unit(Nil: List[A])) { (ra, sequence_of_tail) =>
+      map2(ra, sequence_of_tail)(_ :: _)
+//      rng => {
+//        val (a, rng2) = ra(rng)
+//        val (as, rng3) = sequence_of_tail(rng2)
+//        (a :: as, rng3)
+//      }
+    }
+
+  def ints_viaSequence(count: Int)(rng: RNG): (List[Int], RNG) =
+    sequence(List.fill(count)(int))(rng)
+
+  //                                 RNG => (List[Int], RNG)
+  def ints_viaSequence2(count: Int): Rand[List[Int]] =
+    sequence(List.fill(count)(int))
 
   def flatMap[A, B](r: Rand[A])(f: A => Rand[B]): Rand[B] = ???
 
