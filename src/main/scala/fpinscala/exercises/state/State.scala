@@ -125,4 +125,12 @@ enum Input:
 case class Machine(locked: Boolean, candies: Int, coins: Int)
 
 object Candy:
-  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = ???
+  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] =
+
+    // Hint: Each input represents a transition function that transforms
+    // the machine. In a OO setup we'd have a method on machine of type
+    // void input(i: Input) that would mutate the inner state of the
+    // Machine object. Here we have a transformation function.
+    def update(i: Input)(m: Machine): Machine = ???
+
+    ???
