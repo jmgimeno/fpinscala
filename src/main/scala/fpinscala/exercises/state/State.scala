@@ -6,23 +6,6 @@ import scala.annotation.tailrec
 trait RNG:
   def nextInt: (Int, RNG) // Should generate a random `Int`. We'll later define other functions in terms of `nextInt`.
 
-type Rand[+A] = RNG => (A, RNG)
-
-extension [A](ra: Rand[A]) {
-  // We define them here to have map / flatMap
-  // defined as methods on the type and be able to
-  // use for notation
-  def map[B](f: A => B): Rand[B] =
-    rng =>
-      val (a, rng2) = ra(rng)
-      (f(a), rng2)
-
-  def flatMap[B](f: A => Rand[B]): Rand[B] =
-    rng =>
-      val (a, rng2) = ra(rng)
-      f(a)(rng2)
-}
-
 object RNG:
   // NB - this was called SimpleRNG in the book text
 
@@ -33,14 +16,27 @@ object RNG:
       val n = (newSeed >>> 16).toInt // `>>>` is right binary shift with zero fill. The value `n` is our new pseudo-random integer.
       (n, nextRNG) // The return value is a tuple containing both a pseudo-random integer and the next `RNG` state.
 
+  type Rand[+A] = RNG => (A, RNG)
+
+  extension [A](ra: Rand[A]) {
+    // We define them here to have map / flatMap
+    // defined as methods on the type and be able to
+    // use for notation
+    def map[B](f: A => B): Rand[B] =
+      rng =>
+        val (a, rng2) = ra(rng)
+        (f(a), rng2)
+
+    def flatMap[B](f: A => Rand[B]): Rand[B] =
+      rng =>
+        val (a, rng2) = ra(rng)
+        f(a)(rng2)
+  }
 
   val int: Rand[Int] = _.nextInt
 
   def unit[A](a: A): Rand[A] =
     rng => (a, rng)
-
-  def map[A, B](s: Rand[A])(f: A => B): Rand[B] =
-    s.map(f)
 
   def nonNegativeInt(rng: RNG): (Int, RNG) =
     val (n, rng2) = rng.nextInt
@@ -109,11 +105,6 @@ object RNG:
   //                                 RNG => (List[Int], RNG)
   def ints_viaSequence2(count: Int): Rand[List[Int]] =
     sequence(List.fill(count)(int))
-
-  //              r:RNG => (A, RNG)  f:A => RNG => (B, RNG)
-  //                                              RNG => (B, RNG)
-  def flatMap[A, B](r: Rand[A])(f: A => Rand[B]): Rand[B] =
-    r.flatMap(f)
 
   def nonNegativeLessThan(n: Int): Rand[Int] =
     flatMap(nonNegativeInt) { i =>
