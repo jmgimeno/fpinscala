@@ -6,6 +6,23 @@ import scala.annotation.tailrec
 trait RNG:
   def nextInt: (Int, RNG) // Should generate a random `Int`. We'll later define other functions in terms of `nextInt`.
 
+type Rand[+A] = RNG => (A, RNG)
+
+extension [A](ra: Rand[A]) {
+  // We define them here to have map / flatMap
+  // defined as methods on the type and be able to
+  // use for notation
+  def map[B](f: A => B): Rand[B] =
+    rng =>
+      val (a, rng2) = ra(rng)
+      (f(a), rng2)
+
+  def flatMap[B](f: A => Rand[B]): Rand[B] =
+    rng =>
+      val (a, rng2) = ra(rng)
+      f(a)(rng2)
+}
+
 object RNG:
   // NB - this was called SimpleRNG in the book text
 
@@ -16,7 +33,6 @@ object RNG:
       val n = (newSeed >>> 16).toInt // `>>>` is right binary shift with zero fill. The value `n` is our new pseudo-random integer.
       (n, nextRNG) // The return value is a tuple containing both a pseudo-random integer and the next `RNG` state.
 
-  type Rand[+A] = RNG => (A, RNG)
 
   val int: Rand[Int] = _.nextInt
 
@@ -24,9 +40,7 @@ object RNG:
     rng => (a, rng)
 
   def map[A, B](s: Rand[A])(f: A => B): Rand[B] =
-    rng =>
-      val (a, rng2) = s(rng)
-      (f(a), rng2)
+    s.map(f)
 
   def nonNegativeInt(rng: RNG): (Int, RNG) =
     val (n, rng2) = rng.nextInt
@@ -82,11 +96,11 @@ object RNG:
     //   Rand[List[A]]    Rand[A]    Rand[List[A]]
     rs.foldRight(unit(Nil: List[A])) { (ra, sequence_of_tail) =>
       map2(ra, sequence_of_tail)(_ :: _)
-//      rng => {
-//        val (a, rng2) = ra(rng)
-//        val (as, rng3) = sequence_of_tail(rng2)
-//        (a :: as, rng3)
-//      }
+      //      rng => {
+      //        val (a, rng2) = ra(rng)
+      //        val (as, rng3) = sequence_of_tail(rng2)
+      //        (a :: as, rng3)
+      //      }
     }
 
   def ints_viaSequence(count: Int)(rng: RNG): (List[Int], RNG) =
@@ -96,12 +110,29 @@ object RNG:
   def ints_viaSequence2(count: Int): Rand[List[Int]] =
     sequence(List.fill(count)(int))
 
-  def flatMap[A, B](r: Rand[A])(f: A => Rand[B]): Rand[B] = ???
+  //              r:RNG => (A, RNG)  f:A => RNG => (B, RNG)
+  //                                              RNG => (B, RNG)
+  def flatMap[A, B](r: Rand[A])(f: A => Rand[B]): Rand[B] =
+    r.flatMap(f)
 
-  def mapViaFlatMap[A, B](r: Rand[A])(f: A => B): Rand[B] = ???
+  def nonNegativeLessThan(n: Int): Rand[Int] =
+    flatMap(nonNegativeInt) { i =>
+      val mod = i % n
+      if i + (n - 1) - mod >= 0 then unit(mod) else nonNegativeLessThan(n)
+    }
 
-  def map2ViaFlatMap[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
+  def mapViaFlatMap[A, B](r: Rand[A])(f: A => B): Rand[B] =
+    flatMap(r) { a =>
+      unit(f(a))
+    }
 
+  def map2ViaFlatMap[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
+    for {
+      a <- ra
+      b <- rb
+    } yield f(a, b)
+
+// State = State ACTION !!!!
 opaque type State[S, +A] = S => (A, S)
 
 object State:
@@ -109,15 +140,35 @@ object State:
     def run(s: S): (A, S) = underlying(s)
 
     def map[B](f: A => B): State[S, B] =
-      ???
+      s => {
+        val (a, s2) = underlying(s)
+        (f(a), s2)
+      }
 
     def map2[B, C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
-      ???
+      for {
+        a <- underlying
+        b <- sb
+      } yield f(a, b)
 
     def flatMap[B](f: A => State[S, B]): State[S, B] =
-      ???
+      s => {
+        val (a, s2) = underlying(s)
+        f(a)(s2)
+      }
 
   def apply[S, A](f: S => (A, S)): State[S, A] = f
+
+  def unit[S, A](a: A): State[S, A] = apply(s => (a, s))
+
+  def traverse[S, A, B](sas: List[A])(f: A => State[S, B]): State[S, List[B]] =
+    sas.foldRight(unit[S, List[B]](Nil)) { (head, traverse_of_tail) =>
+      f(head).map2(traverse_of_tail)(_ :: _)
+    }
+
+  def sequence[S, A](sas: List[State[S, A]]): State[S, List[A]] =
+    traverse(sas)(identity)
+
 
 enum Input:
   case Coin, Turn
