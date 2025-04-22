@@ -130,6 +130,7 @@ object State:
   extension [S, A](underlying: State[S, A])
     def run(s: S): (A, S) = underlying(s)
 
+    //                     S => (B, S)
     def map[B](f: A => B): State[S, B] =
       s => {
         val (a, s2) = underlying(s)
@@ -150,7 +151,7 @@ object State:
 
   def apply[S, A](f: S => (A, S)): State[S, A] = f
 
-  def unit[S, A](a: A): State[S, A] = apply(s => (a, s))
+  def unit[S, A](a: A): State[S, A] = s => (a, s)
 
   def traverse[S, A, B](sas: List[A])(f: A => State[S, B]): State[S, List[B]] =
     sas.foldRight(unit[S, List[B]](Nil)) { (head, traverse_of_tail) =>
@@ -160,6 +161,15 @@ object State:
   def sequence[S, A](sas: List[State[S, A]]): State[S, List[A]] =
     traverse(sas)(identity)
 
+  def get[S]: State[S, S] = s => (s, s)
+
+  def set[S](s: S): State[S, Unit] = _ => ((), s)
+
+  def modify[S](f: S => S): State[S, Unit] =
+    for
+      s <- get
+      _ <- set(f(s))
+    yield ()
 
 enum Input:
   case Coin, Turn
@@ -167,12 +177,31 @@ enum Input:
 case class Machine(locked: Boolean, candies: Int, coins: Int)
 
 object Candy:
+  /*
+  - Inserting a coin into a locked machine will cause it to unlock
+  if there’s any candy left.
+  - Turning the knob on an unlocked machine will cause it to dispense
+  candy and become locked.
+  - Turning the knob on a locked machine or inserting a coin into an
+  unlocked machine does nothing.
+  - A machine that’s out of candy ignores all inputs.
+  */
   def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] =
-
     // Hint: Each input represents a transition function that transforms
     // the machine. In a OO setup we'd have a method on machine of type
     // void input(i: Input) that would mutate the inner state of the
     // Machine object. Here we have a transformation function.
-    def update(i: Input)(m: Machine): Machine = ???
+    def update(i: Input)(m: Machine): Machine =
+      (i, m) match
+        case (_, Machine(_, 0, _)) => m
+        case (Input.Coin, Machine(true, candies, coins)) =>
+          Machine(false, candies, coins + 1)
+        case (Input.Turn, Machine(false, candies, coins)) =>
+          Machine(true, candies - 1, coins)
+        case (Input.Coin, Machine(false, _, _)) => m
+        case (Input.Turn, Machine(true, _, _)) => m
 
-    ???
+    for {
+      _ <- State.traverse(inputs)(input => State.modify(update(input)))
+      m <- State.get
+    } yield (m.coins, m.candies)

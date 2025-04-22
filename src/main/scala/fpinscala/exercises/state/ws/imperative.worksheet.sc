@@ -1,4 +1,4 @@
-import fpinscala.answers.state.State
+import fpinscala.exercises.state.State
 import State.*
 
 // program (està amagat): Int => (Unit, Int)
@@ -27,10 +27,9 @@ program.run(1)
 program.run(2)
 
 val megaprogram: State[Int, Unit] =
-  val patata = program
   for
-    _ <- patata
-    _ <- patata
+    _ <- program
+    _ <- program
   yield ()
 
 megaprogram.run(5)
