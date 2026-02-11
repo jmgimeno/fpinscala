@@ -23,19 +23,19 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         scala: [3.8.1]
-        java: [zulu@17]
+        java: [temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Setup Java (zulu@17)
-        if: matrix.java == 'zulu@17'
-        uses: actions/setup-java@v4
+      - name: Setup Java (temurin@17)
+        if: matrix.java == 'temurin@17'
+        uses: actions/setup-java@v5
         with:
-          distribution: zulu
+          distribution: temurin
           java-version: 17
           cache: sbt
 
@@ -52,7 +52,7 @@ jobs:
         run: tar cf targets.tar target project/target
 
       - name: Upload target directories
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: target-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
           path: targets.tar
@@ -65,19 +65,19 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         scala: [3.8.1]
-        java: [zulu@17]
+        java: [temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Setup Java (zulu@17)
-        if: matrix.java == 'zulu@17'
-        uses: actions/setup-java@v4
+      - name: Setup Java (temurin@17)
+        if: matrix.java == 'temurin@17'
+        uses: actions/setup-java@v5
         with:
-          distribution: zulu
+          distribution: temurin
           java-version: 17
           cache: sbt
 
@@ -85,9 +85,9 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Download target directories (3.8.1)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
-          name: target-${{ matrix.os }}-3.3.4-${{ matrix.java }}
+          name: target-${{ matrix.os }}-3.8.1-${{ matrix.java }}
 
       - name: Inflate target directories (3.8.1)
         run: |
