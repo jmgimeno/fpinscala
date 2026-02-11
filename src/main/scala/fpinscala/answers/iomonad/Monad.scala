@@ -72,13 +72,13 @@ trait Monad[F[_]] extends Functor[F]:
 
 object Monad:
 
-  given function0Monad: Monad[Function0] with
+  given function0Monad: Monad[Function0]:
     def unit[A](a: => A) = () => a
     extension [A](fa: Function0[A])
       def flatMap[B](f: A => Function0[B]) =
         () => f(fa())()
 
-  given tailrecMonad: Monad[TailRec] with
+  given tailrecMonad: Monad[TailRec]:
     def unit[A](a: => A) = TailCalls.done(a)
     extension [A](fa: TailRec[A])
       def flatMap[B](f: A => TailRec[B]) =
@@ -86,7 +86,7 @@ object Monad:
 
 
   import fpinscala.answers.parallelism.Nonblocking.Par
-  given parMonad: Monad[Par] with
+  given parMonad: Monad[Par]:
     def unit[A](a: => A) = Par.unit(a)
     extension [A](fa: Par[A])
       def flatMap[B](f: A => Par[B]) =

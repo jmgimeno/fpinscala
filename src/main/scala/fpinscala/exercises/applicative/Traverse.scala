@@ -55,12 +55,12 @@ trait Traverse[F[_]] extends Functor[F], Foldable[F]:
 case class Tree[+A](head: A, tail: List[Tree[A]])
 
 object Traverse:
-  given listTraverse: Traverse[List] with
+  given listTraverse: Traverse[List]:
     extension [A](as: List[A])
       override def traverse[G[_]: Applicative, B](f: A => G[B]): G[List[B]] =
         ???
 
-  given optionTraverse: Traverse[Option] with
+  given optionTraverse: Traverse[Option]:
     extension [A](oa: Option[A])
       override def traverse[G[_]: Applicative, B](f: A => G[B]): G[Option[B]] =
         ???
@@ -70,7 +70,7 @@ object Traverse:
       override def traverse[G[_]: Applicative, B](f: A => G[B]): G[Tree[B]] =
         ???
   
-  given mapTraverse[K]: Traverse[Map[K, _]] with
+  given mapTraverse: [K] => Traverse[Map[K, _]]:
     extension [A](m: Map[K, A])
       override def traverse[G[_]: Applicative, B](f: A => G[B]): G[Map[K, B]] =
         ???

@@ -174,7 +174,7 @@ enum LazyList[+A]:
   @annotation.tailrec
   final def find(f: A => Boolean): Option[A] = this match
     case Empty => None
-    case Cons(h, t) => if (f(h())) Some(h()) else t().find(f)
+    case Cons(h, t) => if f(h()) then Some(h()) else t().find(f)
 
 object LazyList:
   def cons[A](hd: => A, tl: => LazyList[A]): LazyList[A] =

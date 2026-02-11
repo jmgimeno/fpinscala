@@ -1,6 +1,6 @@
 package fpinscala.answers.iomonad
 
-object BindTest extends App:
+@main def bindTest(): Unit =
 
   def timeit(n: Int)(task: => Unit): Unit =
     val start = System.currentTimeMillis
@@ -21,7 +21,7 @@ object BindTest extends App:
 
   import fpinscala.answers.parallelism.Nonblocking.*
 
-  given parMonad: Monad[Par] with
+  given parMonad: Monad[Par]:
     def unit[A](a: => A) = Par.unit(a)
     extension [A](fa: Par[A])
       def flatMap[B](f: A => Par[B]) =
@@ -39,3 +39,4 @@ object BindTest extends App:
 
   // parMonad.unit(println("woot")).forever.run(pool)
   pool.shutdown()
+end bindTest

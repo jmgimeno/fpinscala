@@ -11,7 +11,7 @@ object SyncTask:
     def result: Try[A] = self.result
     def resultOrThrow: A = self.result.get
 
-  given monadThrowInstance: MonadThrow[SyncTask] with
+  given monadThrowInstance: MonadThrow[SyncTask]:
     def unit[A](a: => A): SyncTask[A] =
       TailCalls.done(Try(a))
 

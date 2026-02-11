@@ -93,7 +93,7 @@ class RNGSuite extends PropSuite:
       def nonNegativeLessThan(n: Int): Rand[Int] =
         flatMap(nonNegativeInt): i =>
           val mod = i % n
-          if (i + (n - 1) - mod >= 0) unit(mod) else nonNegativeLessThan(n)
+          if i + (n - 1) - mod >= 0 then unit(mod) else nonNegativeLessThan(n)
       assert(checkRNGNonNegativeLessThan(rng, counter, nonNegativeLessThan(limit), limit))
 
   test("RNG.mapViaFlatMap")(genRNG ** genCounter):

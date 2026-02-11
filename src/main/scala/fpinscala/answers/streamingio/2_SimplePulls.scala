@@ -172,7 +172,7 @@ object SimplePulls:
           (newWindow, meanOfNewWindow)
         .map(_(1))
 
-    given [O]: Monad[[x] =>> Pull[O, x]] with
+    given [O] => Monad[[x] =>> Pull[O, x]]:
       def unit[A](a: => A): Pull[O, A] = Result(a)
       extension [A](pa: Pull[O, A])
         def flatMap[B](f: A => Pull[O, B]): Pull[O, B] =
@@ -215,7 +215,7 @@ object SimplePulls:
       def ++(that: => Stream[O]): Stream[O] =
         self >> that
 
-    given Monad[Stream] with
+    given Monad[Stream]:
       def unit[A](a: => A): Stream[A] = Pull.Output(a)
       extension [A](sa: Stream[A])
         def flatMap[B](f: A => Stream[B]): Stream[B] =

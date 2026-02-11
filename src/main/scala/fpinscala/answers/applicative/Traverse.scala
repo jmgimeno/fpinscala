@@ -18,7 +18,7 @@ trait Traverse[F[_]] extends Functor[F], Foldable[F]:
 
   type Id[A] = A
   object Id:
-    given idMonad: Monad[Id] with
+    given idMonad: Monad[Id]:
       def unit[A](a: => A) = a
       extension [A](a: A)
         override def flatMap[B](f: A => B): B = f(a)
@@ -96,13 +96,13 @@ trait Traverse[F[_]] extends Functor[F], Foldable[F]:
 case class Tree[+A](head: A, tail: List[Tree[A]])
 
 object Traverse:
-  given listTraverse: Traverse[List] with
+  given listTraverse: Traverse[List]:
     extension [A](as: List[A])
       override def traverse[G[_]: Applicative, B](f: A => G[B]): G[List[B]] =
         val g = summon[Applicative[G]]
         as.foldRight(g.unit(List[B]()))((a, acc) => f(a).map2(acc)(_ :: _))
 
-  given optionTraverse: Traverse[Option] with
+  given optionTraverse: Traverse[Option]:
     extension [A](oa: Option[A])
       override def traverse[G[_]: Applicative, B](f: A => G[B]): G[Option[B]] =
         oa match
@@ -114,7 +114,7 @@ object Traverse:
       override def traverse[G[_]: Applicative, B](f: A => G[B]): G[Tree[B]] =
         f(ta.head).map2(ta.tail.traverse(a => a.traverse(f)))(Tree(_, _))
   
-  given mapTraverse[K]: Traverse[Map[K, _]] with
+  given mapTraverse: [K] => Traverse[Map[K, _]]:
     extension [A](m: Map[K, A])
       override def traverse[G[_]: Applicative, B](f: A => G[B]): G[Map[K, B]] =
         m.foldLeft(summon[Applicative[G]].unit(Map.empty[K, B])):
@@ -124,13 +124,13 @@ object Traverse:
   // An example of a Foldable that is not a functor
   case class Iteration[A](a: A, f: A => A, n: Int)
   object Iteration:
-    given iterationFoldable: Foldable[Iteration] with
+    given iterationFoldable: Foldable[Iteration]:
       extension [A](i: Iteration[A])
         override def foldMap[B](g: A => B)(using m: Monoid[B]): B =
           def iterate(n: Int, b: B, c: A): B =
             if n <= 0 then b else iterate(n - 1, g(c), i.f(i.a))
           iterate(i.n, m.empty, i.a)
-    given iterationFunctor: Functor[Iteration] with
+    given iterationFunctor: Functor[Iteration]:
       extension [A](i: Iteration[A])
         def map[B](f: A => B): Iteration[B] =
           Iteration(f(i.a), b => ???, i.n)

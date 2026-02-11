@@ -69,7 +69,7 @@ object IO1:
     def apply[A](a: => A): IO[A] = new: // syntax for IO { .. }
       def unsafeRun = a
 
-    given monad: Monad[IO] with
+    given monad: Monad[IO]:
       def unit[A](a: => A): IO[A] = IO(a)
       extension [A](fa: IO[A])
         def flatMap[B](f: A => IO[B]) = fa.flatMap(f)
@@ -197,7 +197,7 @@ object IO2a:
     def suspend[A](ioa: => IO[A]): IO[A] =
       Suspend(() => ioa).flatMap(identity)
 
-    given monad: Monad[IO] with
+    given monad: Monad[IO]:
       def unit[A](a: => A): IO[A] = IO(a)
       extension [A](fa: IO[A])
         def flatMap[B](f: A => IO[B]): IO[B] = fa.flatMap(f)
@@ -268,7 +268,7 @@ object IO2b:
     def suspend[A](a: => TailRec[A]) =
       Suspend(() => a).flatMap(identity)
 
-    given monad: Monad[TailRec] with
+    given monad: Monad[TailRec]:
       def unit[A](a: => A): TailRec[A] = TailRec(a)
       extension [A](fa: TailRec[A])
         def flatMap[B](f: A => TailRec[B]): TailRec[B] = fa.flatMap(f)
@@ -352,7 +352,7 @@ object IO2c:
     def suspend[A](aa: => Async[A]): Async[A] =
       Suspend(Par.delay(aa)).flatMap(identity)
 
-    given monad: Monad[Async] with
+    given monad: Monad[Async]:
       def unit[A](a: => A): Async[A] = Async(a)
       extension [A](fa: Async[A])
         def flatMap[B](f: A => Async[B]): Async[B] = fa.flatMap(f)
@@ -415,7 +415,7 @@ object IO3:
 
   object Free:
 
-    given freeMonad[F[_]]: Monad[[x] =>> Free[F, x]] with
+    given freeMonad: [F[_]] =>  Monad[[x] =>> Free[F, x]]:
       def unit[A](a: => A) = Return(a)
       extension [A](fa: Free[F, A])
         def flatMap[B](f: A => Free[F, B]) = fa.flatMap(f)
@@ -512,7 +512,7 @@ object IO3:
       ConsoleReader(r => f(run(r)).run(r))
 
   object ConsoleReader:
-    given monad: Monad[ConsoleReader] with
+    given monad: Monad[ConsoleReader]:
       def unit[A](a: => A) = ConsoleReader(_ => a)
       extension [A](fa: ConsoleReader[A])
         def flatMap[B](f: A => ConsoleReader[B]) = fa.flatMap(f)
@@ -532,7 +532,7 @@ object IO3:
         f(a).run(s1)
 
   object ConsoleState:
-    given monad: Monad[ConsoleState] with
+    given monad: Monad[ConsoleState]:
       def unit[A](a: => A) = ConsoleState(bufs => (a,bufs))
       extension [A](fa: ConsoleState[A])
         def flatMap[B](f: A => ConsoleState[B]) = fa.flatMap(f)
@@ -622,7 +622,7 @@ object IO4:
 
 
   object Free:
-    given freeMonad[F[_]]: Monad[[x] =>> Free[F, x]] with
+    given freeMonad: [F[_]] => Monad[[x] =>> Free[F, x]]:
       def unit[A](a: => A) = Return(a)
       extension [A](fa: Free[F, A])
         def flatMap[B](f: A => Free[F, B]) = fa.flatMap(f)
@@ -689,19 +689,19 @@ object IO5:
     def printLn(line: String): F[Unit]
 
   object Console:
-    given parConsole: Console[Par] with
+    given parConsole: Console[Par]:
       def readLn =
         Par.lazyUnit(Try(readLine()).toOption)
       def printLn(line: String) =
         Par.lazyUnit(println(line))
 
-    given thunkConsole: Console[Function0] with
+    given thunkConsole: Console[Function0]:
       def readLn =
         () => Try(readLine()).toOption
       def printLn(line: String) =
         () => println(line)
 
-    given ioConsole: Console[IO] with
+    given ioConsole: Console[IO]:
       def readLn =
         Free.Suspend(Par.lazyUnit(Try(readLine()).toOption))
       def printLn(line: String) =
@@ -723,7 +723,7 @@ object IO5:
     def writeLines(file: String, lines: List[String]): F[Unit]
 
   object Files:
-    given thunkFiles: Files[Function0] with
+    given thunkFiles: Files[Function0]:
       def readLines(file: String) = () => List("line 1", "line 2")
       def writeLines(file: String, lines: List[String]) = () => ()
 

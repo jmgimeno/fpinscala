@@ -164,7 +164,7 @@ case class Location(input: String, offset: Int = 0):
     if input.length > 1
     then
       val itr = input.linesIterator.drop(line - 1)
-      if (itr.hasNext) itr.next() else ""
+      if itr.hasNext then itr.next() else ""
     else ""
 
   def columnCaret = (" " * (col - 1)) + "^"

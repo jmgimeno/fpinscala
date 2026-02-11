@@ -61,7 +61,7 @@ object Applicative:
     def fromLazyList[A](la: LazyList[A]): ZipList[A] = la
     extension [A](za: ZipList[A]) def toLazyList: LazyList[A] = za
 
-    given zipListApplicative: Applicative[ZipList] with
+    given zipListApplicative: Applicative[ZipList]:
       def unit[A](a: => A): ZipList[A] =
         LazyList.continually(a)
       extension [A](fa: ZipList[A])
@@ -73,7 +73,7 @@ object Applicative:
     case Invalid(error: E) extends Validated[E, Nothing]
   
   object Validated:
-    given validatedApplicative[E: Monoid]: Applicative[Validated[E, _]] with
+    given validatedApplicative: [E: Monoid] => Applicative[Validated[E, _]]:
       def unit[A](a: => A) = ???
       extension [A](fa: Validated[E, A])
         override def map2[B, C](fb: Validated[E, B])(f: (A, B) => C) =
@@ -81,21 +81,21 @@ object Applicative:
 
   type Const[A, B] = A
 
-  given monoidApplicative[M](using m: Monoid[M]): Applicative[Const[M, _]] with
+  given monoidApplicative: [M] => (m: Monoid[M]) => Applicative[Const[M, _]]:
     def unit[A](a: => A): M = m.empty
     override def apply[A, B](m1: M)(m2: M): M = m.combine(m1, m2)
 
-  given optionMonad: Monad[Option] with
+  given optionMonad: Monad[Option]:
     def unit[A](a: => A): Option[A] = Some(a)
     extension [A](oa: Option[A])
       override def flatMap[B](f: A => Option[B]) = oa.flatMap(f)
 
-  given eitherMonad[E]: Monad[Either[E, _]] with
+  given eitherMonad: [E] => Monad[Either[E, _]]:
     def unit[A](a: => A): Either[E, A] = ???
     extension [A](eea: Either[E, A])
       override def flatMap[B](f: A => Either[E, B]) = ???
 
-  given stateMonad[S]: Monad[State[S, _]] with
+  given stateMonad: [S] => Monad[State[S, _]]:
     def unit[A](a: => A): State[S, A] = State(s => (a, s))
     extension [A](st: State[S, A])
       override def flatMap[B](f: A => State[S, B]): State[S, B] =

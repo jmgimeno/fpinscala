@@ -186,25 +186,25 @@ object Monoid:
   def foldMapVG[A, B](as: IndexedSeq[A])(f: A => B)(using m: Monoid[B]): B =
     foldMapV(as, m)(f)
 
-  given Monoid[Int] with
+  given Monoid[Int]:
     def combine(x: Int, y: Int) = x + y
     val empty = 0
 
   val charCount = foldMapG(List("abra", "ca", "dabra"))(_.length)
 
-  given productMonoid[A, B](using ma: Monoid[A], mb: Monoid[B]): Monoid[(A, B)] with
+  given productMonoid: [A, B] => (ma: Monoid[A], mb: Monoid[B]) => Monoid[(A, B)]:
     def combine(x: (A, B), y: (A, B)) =
       (ma.combine(x(0), y(0)), mb.combine(x(1), y(1)))
     val empty = (ma.empty, mb.empty)
 
-  given mapMergeMonoid[K, V](using mv: Monoid[V]): Monoid[Map[K, V]] with
+  given mapMergeMonoid: [K, V] => (mv: Monoid[V]) => Monoid[Map[K, V]]:
     def combine(a: Map[K, V], b: Map[K, V]) =
       (a.keySet ++ b.keySet).foldLeft(empty): (acc,k) =>
         acc.updated(k, mv.combine(a.getOrElse(k, mv.empty),
                                   b.getOrElse(k, mv.empty)))
     val empty = Map()
 
-  given functionMonoid[A, B](using mb: Monoid[B]): Monoid[A => B] with
+  given functionMonoid:[A, B] => (mb: Monoid[B]) => Monoid[A => B]:
     def combine(f: A => B, g: A => B) = a => mb.combine(f(a), g(a))
     val empty: A => B = a => mb.empty
 
@@ -217,6 +217,6 @@ object Monoid:
     foldMapV(as, bagMonoid)(a => Map(a -> 1))
 
   // We'll need this given instance in later chapters
-  given _listMonoid[A]: Monoid[List[A]] = listMonoid 
+  given _listMonoid:[A] => Monoid[List[A]] = listMonoid 
 
 end Monoid

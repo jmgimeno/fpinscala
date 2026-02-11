@@ -21,7 +21,7 @@ trait Foldable[F[_]]:
 
 object Foldable:
 
-  given Foldable[List] with
+  given Foldable[List]:
     extension [A](as: List[A])
       override def foldRight[B](acc: B)(f: (A, B) => B) =
         ???
@@ -30,7 +30,7 @@ object Foldable:
       override def toList: List[A] =
         ???
 
-  given Foldable[IndexedSeq] with
+  given Foldable[IndexedSeq]:
     extension [A](as: IndexedSeq[A])
       override def foldRight[B](acc: B)(f: (A, B) => B) =
         ???
@@ -39,7 +39,7 @@ object Foldable:
       override def foldMap[B](f: A => B)(using mb: Monoid[B]): B =
         ???
 
-  given Foldable[LazyList] with
+  given Foldable[LazyList]:
     extension [A](as: LazyList[A])
       override def foldRight[B](acc: B)(f: (A, B) => B) =
         ???
@@ -48,7 +48,7 @@ object Foldable:
 
   import fpinscala.exercises.datastructures.Tree
 
-  given Foldable[Tree] with
+  given Foldable[Tree]:
     import Tree.{Leaf, Branch}
     extension [A](as: Tree[A])
       override def foldRight[B](acc: B)(f: (A, B) => B) =
@@ -58,7 +58,7 @@ object Foldable:
       override def foldMap[B](f: A => B)(using mb: Monoid[B]): B =
         ???
 
-  given Foldable[Option] with
+  given Foldable[Option]:
     extension [A](as: Option[A])
       override def foldRight[B](acc: B)(f: (A, B) => B) =
         ???

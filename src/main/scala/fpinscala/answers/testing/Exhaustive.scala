@@ -299,7 +299,7 @@ object Gen:
 
   def sameParity(from: Int, to: Int): Gen[(Int,Int)] = for
     i <- choose(from,to)
-    j <- if (i%2 == 0) even(from,to) else odd(from,to)
+    j <- if i%2 == 0 then even(from,to) else odd(from,to)
   yield (i,j)
 
   def listOfN_1[A](n: Int, g: Gen[A]): Gen[List[A]] =
@@ -336,7 +336,7 @@ object Gen:
     def bools: LazyList[Boolean] =
       randomLazyList(double.map(_ < g1Threshold))(RNG.Simple(302837L))
 
-    Gen(State(RNG.double).flatMap(d => if (d < g1Threshold) g1._1.sample else g2._1.sample),
+    Gen(State(RNG.double).flatMap(d => if d < g1Threshold then g1._1.sample else g2._1.sample),
         interleave(bools, g1._1.exhaustive, g2._1.exhaustive))
 
   /* Produce an infinite random lazy list from a `Gen` and a starting `RNG`. */

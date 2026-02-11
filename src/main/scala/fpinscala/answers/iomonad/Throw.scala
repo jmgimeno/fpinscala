@@ -47,7 +47,7 @@ object Throw:
   def apply[A](a: => A): Throw[A] = more(Done(a))
 
   /* `Throw` forms a `Monad`. */
-  given monad: Monad[Throw] with
+  given monad: Monad[Throw]:
 
     def unit[A](a: => A): Throw[A] = Throw(a)
 

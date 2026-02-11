@@ -17,7 +17,7 @@ trait MonadThrow[F[_]] extends Monad[F]:
   def raiseError[A](t: Throwable): F[A]
 
 object MonadThrow:
-  given taskInstance: MonadThrow[Task] with
+  given taskInstance: MonadThrow[Task]:
     def unit[A](a: => A): Task[A] = Task(a)
     extension [A](fa: Task[A])
       def flatMap[B](f: A => Task[B]): Task[B] = Task.monad.flatMap(fa)(f)

@@ -69,15 +69,15 @@ object Monoid:
 
   def count(s: String): Int = ???
 
-  given productMonoid[A, B](using ma: Monoid[A], mb: Monoid[B]): Monoid[(A, B)] with
+  given productMonoid: [A, B] => (ma: Monoid[A], mb: Monoid[B]) => Monoid[(A, B)]:
     def combine(x: (A, B), y: (A, B)) = ???
     val empty = ???
 
-  given functionMonoid[A, B](using mb: Monoid[B]): Monoid[A => B] with
+  given functionMonoid:[A, B] => (mb: Monoid[B]) => Monoid[A => B]:
     def combine(f: A => B, g: A => B) = ???
     val empty: A => B = a => ???
 
-  given mapMergeMonoid[K, V](using mv: Monoid[V]): Monoid[Map[K, V]] with
+  given mapMergeMonoid:[K, V] => (mv: Monoid[V]) =>  Monoid[Map[K, V]]:
     def combine(a: Map[K, V], b: Map[K, V]) = ???
     val empty = ???
 

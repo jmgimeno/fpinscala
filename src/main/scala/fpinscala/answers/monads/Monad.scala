@@ -21,7 +21,7 @@ trait Functor[F[_]]:
       case Right(fb) => fb.map(Right(_))
 
 object Functor:
-  given listFunctor: Functor[List] with
+  given listFunctor: Functor[List]:
     extension [A](as: List[A])
       def map[B](f: A => B): List[B] = as.map(f)
 
@@ -75,13 +75,13 @@ trait Monad[F[_]] extends Functor[F]:
 end Monad      
 
 object Monad:
-  given genMonad: Monad[Gen] with
+  given genMonad: Monad[Gen]:
     def unit[A](a: => A): Gen[A] = Gen.unit(a)
     extension [A](fa: Gen[A])
       override def flatMap[B](f: A => Gen[B]): Gen[B] =
         Gen.flatMap(fa)(f)
 
-  given parMonad: Monad[Par] with
+  given parMonad: Monad[Par]:
     def unit[A](a: => A) = Par.unit(a)
     extension [A](fa: Par[A])
       override def flatMap[B](f: A => Par[B]): Par[B] =
@@ -93,19 +93,19 @@ object Monad:
       override def flatMap[B](f: A => P[B]): P[B] =
         p.flatMap(fa)(f)
 
-  given optionMonad: Monad[Option] with
+  given optionMonad: Monad[Option]:
     def unit[A](a: => A) = Some(a)
     extension [A](fa: Option[A])
       override def flatMap[B](f: A => Option[B]) =
         fa.flatMap(f)
 
-  given lazyListMonad: Monad[LazyList] with
+  given lazyListMonad: Monad[LazyList]:
     def unit[A](a: => A) = LazyList(a)
     extension [A](fa: LazyList[A])
       override def flatMap[B](f: A => LazyList[B]) =
         fa.flatMap(f)
 
-  given listMonad: Monad[List] with
+  given listMonad: Monad[List]:
     def unit[A](a: => A) = List(a)
     extension [A](fa: List[A])
       override def flatMap[B](f: A => List[B]) =
@@ -120,7 +120,7 @@ object Monad:
     type StateS[A] = State[S, A]
 
     // We can then declare the monad for the `StateS` type constructor:
-    given stateMonad: Monad[StateS] with
+    given stateMonad: Monad[StateS]:
       def unit[A](a: => A): State[S, A] = State(s => (a, s))
       extension [A](fa: State[S, A])
         override def flatMap[B](f: A => State[S, B]) =
@@ -129,7 +129,7 @@ object Monad:
   // Using a type lambda, we can define a single given that provides a monad
   // instance for any state type `S`:
   object StateMonadViaTypeLambda: // Wrapping in an object so this instance doesn't conflict with one below
-    given stateMonadViaTypeLambda[S]: Monad[[x] =>> State[S, x]] with
+    given stateMonadViaTypeLambda: [S] => Monad[[x] =>> State[S, x]]:
       def unit[A](a: => A): State[S, A] = State(s => (a, s))
       extension [A](fa: State[S, A])
         override def flatMap[B](f: A => State[S, B]) =
@@ -137,7 +137,7 @@ object Monad:
 
   // With the -Ykind-projector:underscores scalacOption, we can define a single given that
   // provides a monad instance for any state type `S`:
-  given stateMonad[S]: Monad[State[S, _]] with
+  given stateMonad: [S] => Monad[State[S, _]]:
     def unit[A](a: => A): State[S, A] = State(s => (a, s))
     extension [A](fa: State[S, A])
       override def flatMap[B](f: A => State[S, B]) =
@@ -163,7 +163,7 @@ case class Id[+A](value: A):
     f(value)
 
 object Id:
-  given idMonad: Monad[Id] with
+  given idMonad: Monad[Id]:
     def unit[A](a: => A) = Id(a)
     extension [A](fa: Id[A])
       override def flatMap[B](f: A => Id[B]) =
@@ -178,7 +178,7 @@ object Reader:
   extension [R, A](ra: Reader[R, A])
     def run(r: R): A = ra(r)
 
-  given readerMonad[R]: Monad[Reader[R, _]] with
+  given readerMonad: [R] => Monad[Reader[R, _]]:
     def unit[A](a: => A): Reader[R, A] = _ => a
     extension [A](fa: Reader[R, A])
       override def flatMap[B](f: A => Reader[R, B]) =

@@ -30,7 +30,7 @@ object IO:
     def unsafeRunSync(pool: ExecutorService): A =
       ioa.run.run(pool)
 
-  given monad: Monad[IO] with
+  given monad: Monad[IO]:
     def unit[A](a: => A) = IO(a)
     extension [A](fa: IO[A])
       def flatMap[B](f: A => IO[B]): IO[B] =

@@ -20,7 +20,7 @@ trait Functor[F[_]]:
       case Right(fb) => fb.map(Right(_))
 
 object Functor:
-  given listFunctor: Functor[List] with
+  given listFunctor: Functor[List]:
     extension [A](as: List[A])
       def map[B](f: A => B): List[B] = as.map(f)
 
@@ -69,13 +69,13 @@ trait Monad[F[_]] extends Functor[F]:
 end Monad      
 
 object Monad:
-  given genMonad: Monad[Gen] with
+  given genMonad: Monad[Gen]:
     def unit[A](a: => A): Gen[A] = Gen.unit(a)
     extension [A](fa: Gen[A])
       override def flatMap[B](f: A => Gen[B]): Gen[B] =
         Gen.flatMap(fa)(f)
 
-  given parMonad: Monad[Par] with
+  given parMonad: Monad[Par]:
     def unit[A](a: => A) = ???
     extension [A](fa: Par[A])
       override def flatMap[B](f: A => Par[B]): Par[B] =
@@ -87,19 +87,19 @@ object Monad:
       override def flatMap[B](f: A => P[B]): P[B] =
         ???
 
-  given optionMonad: Monad[Option] with
+  given optionMonad: Monad[Option]:
     def unit[A](a: => A) = ???
     extension [A](fa: Option[A])
       override def flatMap[B](f: A => Option[B]) =
         ???
 
-  given lazyListMonad: Monad[LazyList] with
+  given lazyListMonad: Monad[LazyList]:
     def unit[A](a: => A) = ???
     extension [A](fa: LazyList[A])
       override def flatMap[B](f: A => LazyList[B]) =
         ???
 
-  given listMonad: Monad[List] with
+  given listMonad: Monad[List]:
     def unit[A](a: => A) = ???
     extension [A](fa: List[A])
       override def flatMap[B](f: A => List[B]) =
@@ -114,7 +114,7 @@ case class Id[+A](value: A):
     ???
 
 object Id:
-  given idMonad: Monad[Id] with
+  given idMonad: Monad[Id]:
     def unit[A](a: => A) = ???
     extension [A](fa: Id[A])
       override def flatMap[B](f: A => Id[B]) =
@@ -126,7 +126,7 @@ object Reader:
   extension [R, A](ra: Reader[R, A])
     def run(r: R): A = ra(r)
 
-  given readerMonad[R]: Monad[Reader[R, _]] with
+  given readerMonad: [R] => Monad[Reader[R, _]]:
     def unit[A](a: => A): Reader[R, A] = ???
     extension [A](fa: Reader[R, A])
       override def flatMap[B](f: A => Reader[R, B]) =

@@ -21,7 +21,7 @@ trait Foldable[F[_]]:
 
 object Foldable:
 
-  given Foldable[List] with
+  given Foldable[List]:
     extension [A](as: List[A])
       override def foldRight[B](acc: B)(f: (A, B) => B) =
         as.foldRight(acc)(f)
@@ -29,7 +29,7 @@ object Foldable:
         as.foldLeft(acc)(f)
       override def toList: List[A] = as
 
-  given Foldable[IndexedSeq] with
+  given Foldable[IndexedSeq]:
     extension [A](as: IndexedSeq[A])
       override def foldRight[B](acc: B)(f: (A, B) => B) =
         as.foldRight(acc)(f)
@@ -38,7 +38,7 @@ object Foldable:
       override def foldMap[B](f: A => B)(using mb: Monoid[B]): B =
         Monoid.foldMapV(as, mb)(f)
 
-  given Foldable[LazyList] with
+  given Foldable[LazyList]:
     extension [A](as: LazyList[A])
       override def foldRight[B](acc: B)(f: (A, B) => B) =
         as.foldRight(acc)(f)
@@ -47,7 +47,7 @@ object Foldable:
 
   import fpinscala.answers.datastructures.Tree
 
-  given Foldable[Tree] with
+  given Foldable[Tree]:
     import Tree.{Leaf, Branch}
     extension [A](as: Tree[A])
       override def foldRight[B](acc: B)(f: (A, B) => B) = as match
@@ -67,7 +67,7 @@ object Foldable:
   // associative `combine`. That kind of object (a monoid without a `empty`) is
   // called a semigroup. `Tree` itself is not a monoid, but it is a semigroup.
 
-  given Foldable[Option] with
+  given Foldable[Option]:
     extension [A](as: Option[A])
       override def foldRight[B](acc: B)(f: (A, B) => B) = as match
         case None => acc

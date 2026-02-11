@@ -157,7 +157,7 @@ object ErrorHandling:
               Output(meanOfNewWindow) >> go(newWindow, tl)
         go(collection.immutable.Queue.empty, self)
 
-    given [F[_], O]: Monad[[x] =>> Pull[F, O, x]] with
+    given [F[_], O] => Monad[[x] =>> Pull[F, O, x]]:
       def unit[A](a: => A): Pull[F, O, A] = Result(a)
       extension [A](pa: Pull[F, O, A])
         def flatMap[B](f: A => Pull[F, O, B]): Pull[F, O, B] =
@@ -257,7 +257,7 @@ object ErrorHandling:
       def toList: List[O] =
         (self: Stream[SyncTask, O]).toList.resultOrThrow
 
-    given [F[_]]: Monad[[x] =>> Stream[F, x]] with
+    given [F[_]] => Monad[[x] =>> Stream[F, x]]:
       def unit[A](a: => A): Stream[F, A] = Pull.Output(a)
       extension [A](sa: Stream[F, A])
         def flatMap[B](f: A => Stream[F, B]): Stream[F, B] =

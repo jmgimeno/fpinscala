@@ -42,7 +42,7 @@ enum Free[+F[_], A]:
     runFree([x] => (fx: F[x]) => Suspend(fToG(fx)))
 
 object Free:
-  given freeMonad[F[_]]: Monad[[x] =>> Free[F, x]] with
+  given freeMonad: [F[_]] => Monad[[x] =>> Free[F, x]]:
     def unit[A](a: => A) = Return(a)
     extension [A](fa: Free[F, A])
       def flatMap[B](f: A => Free[F, B]) = fa.flatMap(f)

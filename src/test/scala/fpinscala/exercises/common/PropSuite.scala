@@ -4,13 +4,10 @@ import fpinscala.answers.testing.exhaustive.*
 import fpinscala.answers.testing.exhaustive.Prop.*
 import fpinscala.answers.testing.exhaustive.Prop.Result.*
 import munit.*
-import munit.internal.FutureCompat.*
-
-import scala.annotation.nowarn
-import scala.util.{Success, Try}
+import scala.util.{Try, Success}
 
 trait PropSuite extends FunSuite:
-  def test[A](name: String)(a: Gen[A])(f: A => Unit)(implicit loc: Location): Unit =
+  def test[A](name: String)(a: Gen[A])(f: A => Unit)(using loc: Location): Unit =
     val g: A => Boolean =
       a =>
         f(a)
@@ -26,10 +23,10 @@ trait PropSuite extends FunSuite:
       "FPInScala Prop",
       t =>
         t.withBodyMap(
-          _.transformCompat {
-            case Success(result: Result @nowarn) => resultToTry(result, t)
+          _.transform {
+            case Success(result: Result) => resultToTry(result, t)
             case r => r
-          }(munitExecutionContext)
+          }(using munitExecutionContext)
         )
     )
 
@@ -39,4 +36,4 @@ trait PropSuite extends FunSuite:
         println(s"${test.name}: + OK, property ${status.toString.toLowerCase}, ran $n tests.")
         Success(())
       case Falsified(msg) =>
-        Try(fail(msg.string)(test.location))
+        Try(fail(msg.string)(using test.location))
