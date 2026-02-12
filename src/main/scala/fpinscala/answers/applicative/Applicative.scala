@@ -192,7 +192,7 @@ object Applicative:
 
   type Const[A, B] = A
 
-  given monoidApplicative: [M] => (m: Monoid[M]) => Applicative[Const[M, _]]:
+  given monoidApplicative: [M: Monoid as m] => Applicative[Const[M, _]]:
     def unit[A](a: => A): M = m.empty
     override def apply[A, B](m1: M)(m2: M): M = m.combine(m1, m2)
 

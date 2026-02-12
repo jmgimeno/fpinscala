@@ -192,19 +192,19 @@ object Monoid:
 
   val charCount = foldMapG(List("abra", "ca", "dabra"))(_.length)
 
-  given productMonoid: [A, B] => (ma: Monoid[A], mb: Monoid[B]) => Monoid[(A, B)]:
+  given productMonoid: [A: Monoid as ma, B: Monoid as mb] => Monoid[(A, B)]:
     def combine(x: (A, B), y: (A, B)) =
       (ma.combine(x(0), y(0)), mb.combine(x(1), y(1)))
     val empty = (ma.empty, mb.empty)
 
-  given mapMergeMonoid: [K, V] => (mv: Monoid[V]) => Monoid[Map[K, V]]:
+  given mapMergeMonoid: [K, V: Monoid as mv] => Monoid[Map[K, V]]:
     def combine(a: Map[K, V], b: Map[K, V]) =
       (a.keySet ++ b.keySet).foldLeft(empty): (acc,k) =>
         acc.updated(k, mv.combine(a.getOrElse(k, mv.empty),
                                   b.getOrElse(k, mv.empty)))
     val empty = Map()
 
-  given functionMonoid:[A, B] => (mb: Monoid[B]) => Monoid[A => B]:
+  given functionMonoid:[A, B: Monoid as mb] => Monoid[A => B]:
     def combine(f: A => B, g: A => B) = a => mb.combine(f(a), g(a))
     val empty: A => B = a => mb.empty
 
