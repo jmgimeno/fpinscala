@@ -13,7 +13,7 @@ object MyProgram:
     val msg = "The absolute value of %d is %d"
     msg.format(x, abs(x))
 
-  @main def printAbs: Unit =
+  @main def printAbs(): Unit =
     println(formatAbs(-42))
 
   // A definition of factorial, using a local, tail recursive function
@@ -30,24 +30,119 @@ object MyProgram:
     var acc = 1
     var i = n
     while i > 0 do {
-      acc *= i; i -= 1
+      acc *= i
+      i -= 1
     }
     acc
+
+  // A direct recursive implementation of factorial
+  def factorialSimple(n: Int): Int = {
+    // CALL
+    if n <= 0
+    then 1
+    else {
+      val f = factorialSimple(n - 1)
+      // RESUME
+      n * f
+    }
+  }
+
+  // We can pass it to iterative using an explicit Stack of Contexts
+  def factorialSimpleToIter(n: Int): Int = {
+    import scala.collection.mutable
+    enum EntryPoint:
+      case CALL, RESUME
+    import EntryPoint.*
+    class Context(val n: Int, var f: Int = 0, var entryPoint: EntryPoint = EntryPoint.CALL)
+    val stack = mutable.Stack.empty[Context]
+    var return_ = 0
+    stack.push(Context(n))
+    while stack.nonEmpty do
+      val context = stack.top
+      context.entryPoint match {
+        case CALL =>
+          if context.n <= 0
+          then {
+            return_ = 1
+            stack.pop()
+          }
+          else {
+            context.entryPoint = RESUME
+            stack.push(Context(context.n - 1))
+          }
+        case RESUME =>
+          context.f = return_
+          return_ = context.n * context.f
+          stack.pop()
+      }
+    return_
+  }
+
+  @annotation.tailrec
+  def go(n: Int, acc: Int): Int = {
+    // CALL
+    if n <= 0 then acc
+    else {
+      go(n - 1, n * acc)
+      // RESUME
+    }
+  }
+
+  def goToIter(n: Int, acc: Int): Int =
+    import scala.collection.mutable
+    enum EntryPoint:
+      case CALL, RESUME
+    import EntryPoint.*
+    class Context(val n: Int, val acc: Int, var entryPoint: EntryPoint = CALL)
+    val stack = mutable.Stack.empty[Context]
+    var return_ = 0
+    stack.push(Context(n, acc))
+    while stack.nonEmpty do
+      val context = stack.top
+      context.entryPoint match {
+        case EntryPoint.CALL =>
+          if context.n <= 0
+          then {
+            return_ = context.acc
+            stack.pop()
+          }
+          else {
+            context.entryPoint = RESUME
+            stack.push(Context(context.n - 1, context.n * context.acc))
+          }
+        case EntryPoint.RESUME =>
+          return_ = return_ // I return (return_ =) the same value the recursive call has returned (return_)
+          stack.pop()
+      }
+    return_
+
+  def factorialUsingGotoIter(n: Int): Int = goToIter(n, 1)
+
+  def goToIter2(n: Int, acc: Int): Int =
+    class Context(val n: Int, val acc: Int)
+    var context = Context(n, acc)
+    while context.n > 0 do
+      context = Context(context.n - 1, context.n * context.acc)
+    context.acc
+
+  def factorialUsingGotoIter2(n: Int): Int = goToIter2(n, 1)
 
   // Exercise 1: Write a function to compute the nth fibonacci number
 
   def fib(n: Int): Int = ???
 
-  // This definition and `formatAbs` are very similar..
+  // This definition and `formatAbs` are very similar.
   private def formatFactorial(n: Int) =
     val msg = "The factorial of %d is %d."
     msg.format(n, factorial(n))
 
   // We can generalize `formatAbs` and `formatFactorial` to
   // accept a _function_ as a parameter
-  def formatResult(name: String, n: Int, f: Int => Int) =
+  def formatResult(name: String, n: Int, f: Int => Int): String =
     val msg = "The %s of %d is %d."
     msg.format(name, n, f(n))
+end MyProgram
+
 
 object FormatAbsAndFactorial:
 
@@ -55,7 +150,7 @@ object FormatAbsAndFactorial:
 
   // Now we can use our general `formatResult` function
   // with both `abs` and `factorial`
-  @main def printAbsAndFactorial: Unit =
+  @main def printAbsAndFactorial(): Unit =
     println(formatResult("absolute value", -42, abs))
     println(formatResult("factorial", 7, factorial))
 
@@ -64,7 +159,7 @@ object TestFib:
   import MyProgram.*
 
   // test implementation of `fib`
-  @main def printFib: Unit =
+  @main def printFib(): Unit =
     println("Expected: 0, 1, 1, 2, 3, 5, 8")
     println("Actual:   %d, %d, %d, %d, %d, %d, %d".format(fib(0), fib(1), fib(2), fib(3), fib(4), fib(5), fib(6)))
 
@@ -76,7 +171,7 @@ object AnonymousFunctions:
   import MyProgram.*
 
   // Some examples of anonymous functions:
-  @main def printAnonymousFunctions: Unit =
+  @main def printAnonymousFunctions(): Unit =
     println(formatResult("absolute value", -42, abs))
     println(formatResult("factorial", 7, factorial))
     println(formatResult("increment", 7, (x: Int) => x + 1))
@@ -84,7 +179,8 @@ object AnonymousFunctions:
     println(formatResult("increment3", 7, x => x + 1))
     println(formatResult("increment4", 7, _ + 1))
     println(formatResult("increment5", 7, x => {
-      val r = x + 1; r
+      val r = x + 1
+      r
     }))
 
 object MonomorphicBinarySearch:
@@ -105,6 +201,26 @@ object MonomorphicBinarySearch:
     // Start the loop at the first element of the array.
     loop(0)
 
+  def findFirst2(ss: Array[String], key: String): Int = {
+    PolymorphicFunctions.findFirst(ss, (s: String) => s == key)
+
+    /*
+    as = ss
+    p = (s: String) => s == key
+
+    def findFirst[A](as: Array[A], p: A => Boolean): Int =
+      @annotation.tailrec
+      def loop(n: Int): Int =
+        if n >= ss.length then -1
+        // else if ((s: String) => s == key)(ss(n)) then n
+        else if ss(n) == key) then n
+        else loop(n + 1)
+
+      loop(0)
+     */
+  }
+
+
 object PolymorphicFunctions:
 
   // Here's a polymorphic version of `findFirst`, parameterized on
@@ -117,7 +233,7 @@ object PolymorphicFunctions:
     def loop(n: Int): Int =
       if n >= as.length then -1
       // If the function `p` matches the current element,
-      // we've found a match and we return its index in the array.
+      // we've found a match, and we return its index in the array.
       else if p(as(n)) then n
       else loop(n + 1)
 

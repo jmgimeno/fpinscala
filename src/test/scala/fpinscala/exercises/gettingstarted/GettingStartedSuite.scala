@@ -4,7 +4,7 @@ import fpinscala.answers.testing.exhaustive.*
 import fpinscala.answers.testing.exhaustive.Gen.`**`
 import fpinscala.exercises.common.Common.*
 import fpinscala.exercises.common.PropSuite
-import fpinscala.exercises.gettingstarted.MyProgram.{factorial, fib}
+import fpinscala.exercises.gettingstarted.MyProgram.*
 import fpinscala.exercises.gettingstarted.PolymorphicFunctions.{compose, curry, isSorted, uncurry}
 
 class GettingStartedSuite extends PropSuite:
@@ -29,6 +29,21 @@ class GettingStartedSuite extends PropSuite:
   test("MyProgram.factorial")(Gen.smallInt): n =>
     assertEquals(factorial(n), (1 to n).product)
 
+  test("MyProgram.factorial2")(Gen.smallInt): n =>
+    assertEquals(factorial2(n), (1 to n).product)
+
+  test("MyProgram.factorialSimple")(Gen.smallInt): n =>
+    assertEquals(factorialSimple(n), (1 to n).product)
+
+  test("MyProgram.factorialSimpleToIter")(Gen.smallInt): n =>
+    assertEquals(factorialSimpleToIter(n), (1 to n).product)
+
+  test("MyProgram.factorialUsingGotoIter")(Gen.smallInt): n =>
+    assertEquals(factorialUsingGotoIter(n), (1 to n).product)
+
+  test("MyProgram.factorialUsingGotoIter2")(Gen.smallInt): n =>
+    assertEquals(factorialUsingGotoIter2(n), (1 to n).product)
+  
   test("MyProgram.fib")(genLengthOfFibonacciSeq): i =>
     assertEquals(fib(i), theFirst21FibonacciNumbers(i))
 
