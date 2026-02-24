@@ -47,6 +47,12 @@ class GettingStartedSuite extends PropSuite:
   test("MyProgram.fib")(genLengthOfFibonacciSeq): i =>
     assertEquals(fib(i), theFirst21FibonacciNumbers(i))
 
+  test("MyProgram.fibIter")(genLengthOfFibonacciSeq): i =>
+    assertEquals(fibIter(i), theFirst21FibonacciNumbers(i))
+
+  test("MyProgram.fibTailRec")(genLengthOfFibonacciSeq): i =>
+    assertEquals(fibTailRec(i), theFirst21FibonacciNumbers(i))
+
   test("PolymorphicFunctions.isSorted for sorted array case")(genSortedArray): array =>
     assert(isSorted[Int](array, _ > _))
 

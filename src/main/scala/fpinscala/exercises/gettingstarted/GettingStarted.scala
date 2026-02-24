@@ -129,8 +129,15 @@ object MyProgram:
 
   // Exercise 1: Write a function to compute the nth fibonacci number
 
+  // Recursive
   def fib(n: Int): Int = ???
 
+  // Iterative (similar to Java) 
+  def fibIter(n: Int): Int = ???
+  
+  // Tail recursive
+  def fibTailRec(n: Int): Int = ???
+  
   // This definition and `formatAbs` are very similar.
   private def formatFactorial(n: Int) =
     val msg = "The factorial of %d is %d."
