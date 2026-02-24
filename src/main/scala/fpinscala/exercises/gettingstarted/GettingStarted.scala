@@ -1,5 +1,7 @@
 package fpinscala.exercises.gettingstarted
 
+import scala.annotation.tailrec
+
 // A comment!
 /* Another comment */
 
@@ -127,17 +129,64 @@ object MyProgram:
 
   def factorialUsingGotoIter2(n: Int): Int = goToIter2(n, 1)
 
+  def goToIter3(n: Int, acc: Int): Int =
+    import scala.collection.mutable
+//    enum EntryPoint:
+//      case CALL, RESUME
+//    import EntryPoint.*
+    class Context(val n: Int, val acc: Int) // , var entryPoint: EntryPoint = CALL)
+    //val stack = mutable.Stack.empty[Context]
+//    var return_ = 0
+    //stack.push(Context(n, acc))
+    var context = Context(n, acc)
+    while context.n > 0 do
+      // val context = stack.top
+//      context.entryPoint match {
+//        case EntryPoint.CALL =>
+//          if context.n <= 0
+//          then {
+//            return_ = context.acc
+//            stack.pop()
+//          }
+//          else {
+//            context.entryPoint = RESUME
+//            stack.push(Context(context.n - 1, context.n * context.acc))
+            context = Context(context.n - 1, context.n * context.acc)
+//          }
+//        case EntryPoint.RESUME =>
+//          return_ = return_ // I return (return_ =) the same value the recursive call has returned (return_)
+//          stack.pop()
+//      }
+//    return_
+    context.acc
   // Exercise 1: Write a function to compute the nth fibonacci number
 
   // Recursive
-  def fib(n: Int): Int = ???
+  def fib(n: Int): Int = {
+    if n == 0 then 0
+    else if n == 1 then 1
+    else fib(n - 1) + fib(n - 2)
+  }
 
-  // Iterative (similar to Java) 
-  def fibIter(n: Int): Int = ???
-  
-  // Tail recursive
-  def fibTailRec(n: Int): Int = ???
-  
+  // Iterative (similar to Java)
+  def fibIter(n: Int): Int =
+    var current = 0
+    var next = 1
+    for i <- 1 to n do
+      val tmp = current
+      current = next
+      next = tmp + next
+    current
+
+  // Tail
+  def fibTailRec(n: Int): Int =
+    @annotation.tailrec
+    def go(i: Int, current: Int, next: Int): Int =
+      if i <= n then go(i + 1, next, current + next)
+      else current
+
+    go(1, 0, 1)
+
   // This definition and `formatAbs` are very similar.
   private def formatFactorial(n: Int) =
     val msg = "The factorial of %d is %d."
@@ -248,11 +297,21 @@ object PolymorphicFunctions:
 
   // Exercise 2: Implement a polymorphic function to check whether
   // an `Array[A]` is sorted
-  def isSorted[A](as: Array[A], gt: (A, A) => Boolean): Boolean = ???
+  def isSorted[A](as: Array[A], gt: (A, A) => Boolean): Boolean =
+    @tailrec
+    def loop(i: Int): Boolean = {
+      if i >= as.length - 1 then true
+      else if gt(as(i), as(i + 1)) then false
+      else loop(i + 1)
+    }
+
+    loop(0)
+
+
+  // TYPE-TETRIS:
 
   // Polymorphic functions are often so constrained by their type
   // that they only have one implementation! Here's an example:
-
   def partial1[A, B, C](a: A, f: (A, B) => C): B => C =
     (b: B) => f(a, b)
 
@@ -261,13 +320,15 @@ object PolymorphicFunctions:
   // Note that `=>` associates to the right, so we could
   // write the return type as `A => B => C`
   def curry[A, B, C](f: (A, B) => C): A => (B => C) =
-    ???
+    (a: A) => (b: B) => f(a, b)
+
+  def curry2[A, B, C](f: (A, B) => C)(a: A)(b: B): C = f(a, b)
 
   // NB: The `Function2` trait has a `curried` method already
 
   // Exercise 4: Implement `uncurry`
   def uncurry[A, B, C](f: A => B => C): (A, B) => C =
-    ???
+    (a: A, b: B) => f(a)(b)
 
   /*
   NB: There is a method on the `Function` object in the standard library,
@@ -282,5 +343,5 @@ object PolymorphicFunctions:
   // Exercise 5: Implement `compose`
 
   def compose[A, B, C](f: B => C, g: A => B): A => C =
-    ???
+    (a: A) => f(g(a))
 
