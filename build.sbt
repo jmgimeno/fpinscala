@@ -1,6 +1,6 @@
 name := "fpinscala"
 
-ThisBuild / scalaVersion := "3.8.1"
+ThisBuild / scalaVersion := "3.8.2"
 
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(name = Some("Build project"), commands = List("test:compile")))
 

@@ -1,4 +1,4 @@
-//> using scala 3.8.1
+//> using scala 3.8.2
 
 //> using options -feature
 //> using options -deprecation
