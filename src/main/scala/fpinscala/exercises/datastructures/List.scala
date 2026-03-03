@@ -97,19 +97,50 @@ object List: // `List` companion object. Contains functions for creating and wor
 
   // end transp 12
 
-  def length[A](l: List[A]): Int = ???
+  def length[A](l: List[A]): Int =
+    l match
+      case Nil => 0
+      case Cons(_, tail) => 1 + length(tail)
 
-  def foldLeft[A, B](l: List[A], acc: B, f: (B, A) => B): B = ???
+  def lengthViaFoldRight[A](l: List[A]): Int =
+    foldRight(l, 0, (_, length_of_tail) => 1 + length_of_tail)
 
-  def sumViaFoldLeft(ns: List[Int]): Int = ???
+  @tailrec
+  def foldLeft[A, B](l: List[A], acc: B, f: (B, A) => B): B =
+    l match
+      case Nil => acc
+      case Cons(x, xs) => foldLeft(xs, f(acc, x), f)
 
-  def productViaFoldLeft(ns: List[Double]): Double = ???
+  def sumViaFoldLeft(ns: List[Int]): Int =
+    foldLeft(ns, 0, (sum_until_head, head) => sum_until_head + head)
 
-  def lengthViaFoldLeft[A](l: List[A]): Int = ???
+  /*
+    It seems they're the same but the "meaning" of _ + _ is completely
+    different:
 
-  def reverse[A](l: List[A]): List[A] = ???
+    def sumViaFoldRight(ns: List[Int]): Int =
+      foldRight(ns, 0, _ + _)
 
-  def appendViaFoldRight[A](l: List[A], r: List[A]): List[A] = ???
+    def sumViaFoldLeft(ns: List[Int]): Int =
+      foldLeft(ns, 0, _ + _)
+   */
+
+  def productViaFoldLeft(ns: List[Double]): Double =
+    foldLeft(ns, 1.0, (product_until_head, head) => product_until_head * head)
+
+  def lengthViaFoldLeft[A](l: List[A]): Int =
+    foldLeft(l, 0, (length_until_head, _) => length_until_head + 1)
+
+  def reverse[A](l: List[A]): List[A] =
+    foldLeft(l, Nil, (reverse_until_head, head) => Cons(head, reverse_until_head))
+
+  def foldRightViaFoldLeft[A,B](l: List[A], acc: B, f: (A, B) => B): B = {
+    // After reversing: foldLeft_until_head = foldRight_of_tail
+    foldLeft(reverse(l), acc, (foldLeft_until_head, head) => f(head, foldLeft_until_head))
+  }
+
+  def appendViaFoldRight[A](l: List[A], r: List[A]): List[A] =
+    foldRight(???, ???, ???)
 
   def concat[A](l: List[List[A]]): List[A] = ???
 
