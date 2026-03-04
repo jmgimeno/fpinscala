@@ -139,22 +139,39 @@ object List: // `List` companion object. Contains functions for creating and wor
     foldLeft(reverse(l), acc, (foldLeft_until_head, head) => f(head, foldLeft_until_head))
   }
 
-  def appendViaFoldRight[A](l: List[A], r: List[A]): List[A] =
-    foldRight(???, ???, ???)
+  def appendViaFoldRight[A](l: List[A], r: List[A]): List[A] = {
+    // foldRight(l, r, Cons.apply)
+    foldRight(l, r, (head, append_of_tail) => Cons(head, append_of_tail))
+  }
 
-  def concat[A](l: List[List[A]]): List[A] = ???
+  def concat[A](l: List[List[A]]): List[A] = {
+    // foldLeft(l, Nil, append)
+    // foldLeft(l, Nil, (concat_until_head, head) => append(concat_until_head ,head))
+    // foldRight(l, Nil, append)
+    foldRight(l, Nil, (head, concat_of_tail) => append(head, concat_of_tail))
+  }
 
-  def incrementEach(l: List[Int]): List[Int] = ???
+  def incrementEach(l: List[Int]): List[Int] =
+    foldRight(l, Nil, (head, increment_of_tail) => Cons(head + 1, increment_of_tail))
 
-  def doubleToString(l: List[Double]): List[String] = ???
+  def doubleToString(l: List[Double]): List[String] =
+    foldRight(l, Nil, (head, double_of_tail) => Cons(head.toString, double_of_tail))
 
-  def map[A, B](l: List[A], f: A => B): List[B] = ???
+  def map[A, B](l: List[A], f: A => B): List[B] =
+    foldRight(l, Nil, (head, map_of_tail) => Cons(f(head), map_of_tail))
 
-  def filter[A](as: List[A], f: A => Boolean): List[A] = ???
+  def filter[A](as: List[A], f: A => Boolean): List[A] =
+    foldRight(as, Nil, (head, filter_of_tail) =>
+      if f(head) then Cons(head,filter_of_tail) else filter_of_tail)
 
-  def flatMap[A, B](as: List[A], f: A => List[B]): List[B] = ???
+  // flatMap -> concatMap
+  def flatMap[A, B](as: List[A], f: A => List[B]): List[B] =
+    foldRight(as, Nil, (head, flat_map_of_tail) => append(f(head), flat_map_of_tail))
 
-  def filterViaFlatMap[A](as: List[A], f: A => Boolean): List[A] = ???
+  def filterViaFlatMap[A](as: List[A], p: A => Boolean): List[A] = {
+    // f of flatMap has type: A => List[A]
+    flatMap(as, head => if p(head) then List(head) else Nil)
+  }
 
   def addPairwise(a: List[Int], b: List[Int]): List[Int] = ???
 
