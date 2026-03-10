@@ -65,7 +65,11 @@ object Tree:
     case Leaf(_) => 1
     case Branch(l,r) => 1 + size(l) + size(r)
 
-  extension (t: Tree[Int]) def firstPositive: Option[Int] = ???
+  // This function IMHO has no sense: its return type
+  // is `Int` but it should be `Option[Int]` because we
+  // cannot guarantee that the tree contains a positive
+  // integer.
+  extension (t: Tree[Int]) def firstPositive: Int = ???
 
   extension (t: Tree[Int]) def maximum: Int = t match {
     case Tree.Leaf(value) => value
