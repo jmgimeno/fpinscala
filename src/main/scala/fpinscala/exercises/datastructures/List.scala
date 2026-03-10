@@ -173,8 +173,21 @@ object List: // `List` companion object. Contains functions for creating and wor
     flatMap(as, head => if p(head) then List(head) else Nil)
   }
 
-  def addPairwise(a: List[Int], b: List[Int]): List[Int] = ???
+  def addPairwise(a: List[Int], b: List[Int]): List[Int] =
+    (a, b) match {
+      case (Nil, _) => Nil
+      case (_, Nil) => Nil
+      case (Cons(h1, t1), Cons(h2, t2)) => Cons(h1 + h2, addPairwise(t1, t2))
+    }
 
-  // def zipWith - TODO determine signature
+  def zipWith[A,B,C](as: List[A], bs: List[B], f: (A, B) => C): List[C] =
+    (as, bs) match {
+      case (Nil, _) => Nil
+      case (_, Nil) => Nil
+      case (Cons(h1, t1), Cons(h2, t2)) => Cons(f(h1, h2), zipWith(t1, t2, f))
+    }
+
+  def addPairwise_v2(a: List[Int], b: List[Int]): List[Int] =
+    zipWith(a, b, _ + _)
 
   def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = ???
