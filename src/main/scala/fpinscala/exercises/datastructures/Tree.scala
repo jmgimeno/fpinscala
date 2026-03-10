@@ -51,7 +51,7 @@ enum Tree[+A]:
    */
   
   def sizeViaFold: Int =
-    this.fold(_ => 1, _ + _)
+    this.fold(_ => 1, 1 + _ + _)
   
   def depthViaFold: Int =
     this.fold(_ => 0, (d1,d2) => math.max(d1,d2) + 1)
