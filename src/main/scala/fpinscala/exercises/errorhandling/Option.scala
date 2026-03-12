@@ -57,9 +57,37 @@ object Option:
     if xs.isEmpty then None
     else Some(xs.sum / xs.length)
 
-  def variance(xs: Seq[Double]): Option[Double] = ???
+  def variance_first_level(xs: Seq[Double]): Option[Double] = {
+    mean(xs) match {
+      case Option.None => None
+      case Option.Some(m) =>
+        val squaredDiffs = xs.map(x => math.pow(x - m, 2))
+        mean(squaredDiffs)
+    }
+  }
 
-  def map2[A, B, C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = ???
+  def variance(xs: Seq[Double]): Option[Double] = {
+    mean(xs).flatMap(m => mean(xs.map(x => math.pow(x - m, 2))))
+  }
+
+  def map2_patternMatching[A, B, C](oa: Option[A], ob: Option[B])(f: (A, B) => C): Option[C] =
+    (oa, ob) match {
+      case (Some(a), Some(b)) => Some(f(a, b))
+      case _ => None
+    }
+
+  def map2[A, B, C](oa: Option[A], ob: Option[B])(f: (A, B) => C): Option[C] =
+    oa.flatMap(a =>
+      ob.map(b =>
+        f(a, b)
+      )
+    )
+
+  def map2_for[A, B, C](oa: Option[A], ob: Option[B])(f: (A, B) => C): Option[C] =
+    for
+      a <- oa
+      b <- ob
+    yield f(a, b)
 
   def sequence[A](as: List[Option[A]]): Option[List[A]] = ???
 
