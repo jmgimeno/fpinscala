@@ -1,21 +1,42 @@
 package fpinscala.exercises.errorhandling
 
 // Hide std library `Option` since we are writing our own in this chapter
+
 import scala.{Option as _, Some as _, None as _}
 
 enum Option[+A]:
   case Some(get: A)
   case None
 
-  def map[B](f: A => B): Option[B] = ???
+  def map[B](f: A => B): Option[B] = this match {
+    case None => None
+    case Some(a) => Some(f(a))
+  }
 
-  def getOrElse[B>:A](default: => B): B = ???
+  def getOrElse[B >: A](default: => B): B = this match {
+    case Option.None => default
+    case Option.Some(a) => a
+  }
 
-  def flatMap[B](f: A => Option[B]): Option[B] = ???
+  def flatMap[B](f: A => Option[B]): Option[B] = this match {
+    case Option.None => None
+    case Option.Some(a) => f(a)
+  }
 
-  def orElse[B>:A](ob: => Option[B]): Option[B] = ???
+  def orElse[B >: A](ob: => Option[B]): Option[B] = this match {
+    case Option.None => ob
+    case Option.Some(a) => this
+  }
 
-  def filter(f: A => Boolean): Option[A] = ???
+  def filter(f: A => Boolean): Option[A] = this match {
+    case Option.Some(a) if f(a) => this
+    case _ => None
+  }
+
+  def filter_viaFlatMap(f: A => Boolean): Option[A] = {
+    // A => Option[A]
+    flatMap(a => if f(a) then Some(a) else None)
+  }
 
 object Option:
 
@@ -38,7 +59,7 @@ object Option:
 
   def variance(xs: Seq[Double]): Option[Double] = ???
 
-  def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = ???
+  def map2[A, B, C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = ???
 
   def sequence[A](as: List[Option[A]]): Option[List[A]] = ???
 
