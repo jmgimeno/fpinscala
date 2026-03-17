@@ -89,6 +89,14 @@ object Option:
       b <- ob
     yield f(a, b)
 
-  def sequence[A](as: List[Option[A]]): Option[List[A]] = ???
+  def sequence[A](as: List[Option[A]]): Option[List[A]] =
+    as.foldRight(Some(Nil) /*Option[List[A]]*/){
+      (oa: Option[A], acc: Option[List[A]]) =>
+        map2(oa, acc)(_ :: _) /*Option[List[A]]*/
+    }
 
-  def traverse[A, B](as: List[A])(f: A => Option[B]): Option[List[B]] = ???
+  def traverse[A, B](as: List[A])(f: A => Option[B]): Option[List[B]] =
+    as.foldRight(Some(Nil) /*Option[List[B]]*/) {
+      (a: A, acc: Option[List[B]]) =>
+        map2(f(a), acc)(_ :: _) /*Option[List[B]]*/
+    }
