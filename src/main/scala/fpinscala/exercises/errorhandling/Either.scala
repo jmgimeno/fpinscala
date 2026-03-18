@@ -1,10 +1,11 @@
 package fpinscala.exercises.errorhandling
 
 // Hide std library `Either` since we are writing our own in this chapter
+
 import scala.{Either as _, Left as _, Right as _}
 import scala.util.control.NonFatal
 
-enum Either[+E,+A]:
+enum Either[+E, +A]:
   case Left(get: E)
   case Right(get: A)
 
@@ -33,13 +34,13 @@ enum Either[+E,+A]:
     yield f(a, b)
 
 object Either:
-  def traverse[E,A,B](as: List[A])(f: A => Either[E, B]): Either[E, List[B]] =
+  def traverse[E, A, B](as: List[A])(f: A => Either[E, B]): Either[E, List[B]] =
     as.foldRight(Right(Nil) /*Either[E, List[B]]*/) {
-      (a: A, acc: Either[E, List[B]]) => 
-        f(a).map2(acc)(_ :: _)/*Either[E, List[B]]*/
+      (a: A, acc: Either[E, List[B]]) =>
+        f(a).map2(acc)(_ :: _) /*Either[E, List[B]]*/
     }
 
-  def sequence[EE,AA](es: List[Either[EE,AA]]): Either[EE,List[AA]] = {
+  def sequence[EE, AA](es: List[Either[EE, AA]]): Either[EE, List[AA]] = {
     /*
     es: List[Either[EE,AA]] <-> as: List[A]
       -> Either[EE,AA] = A
@@ -55,13 +56,13 @@ object Either:
     traverse(es)(a => a) // traverse(es)(identity)
   }
 
-  def mean(xs: IndexedSeq[Double]): Either[String, Double] = 
+  def mean(xs: IndexedSeq[Double]): Either[String, Double] =
     if xs.isEmpty then
       Left("mean of empty list!")
-    else 
+    else
       Right(xs.sum / xs.length)
 
-  def safeDiv(x: Int, y: Int): Either[Throwable, Int] = 
+  def safeDiv(x: Int, y: Int): Either[Throwable, Int] =
     try Right(x / y)
     catch case NonFatal(t) => Left(t)
 
@@ -69,8 +70,18 @@ object Either:
     try Right(a)
     catch case NonFatal(t) => Left(t)
 
-  def map2All[E, A, B, C](a: Either[List[E], A], b: Either[List[E], B], f: (A, B) => C): Either[List[E], C] = ???
+  def map2All[E, A, B, C](a: Either[List[E], A], b: Either[List[E], B], f: (A, B) => C): Either[List[E], C] =
+    (a, b) match {
+      case (Left(e1), Left(e2)) => Left(e1 ++ e2)
+      case (Left(e1), _) => Left(e1)
+      case (_, Left(e2)) => Left(e2)
+      case (Right(a), Right(b)) => Right(f(a, b))
+    }
 
-  def traverseAll[E, A, B](as: List[A], f: A => Either[List[E], B]): Either[List[E], List[B]] = ???
+  def traverseAll[E, A, B](as: List[A], f: A => Either[List[E], B]): Either[List[E], List[B]] =
+    as.foldRight(Right(Nil)) { (a, acc) =>
+      map2All(f(a), acc, _ :: _)
+    }
 
-  def sequenceAll[E, A](as: List[Either[List[E], A]]): Either[List[E], List[A]] = ???
+  def sequenceAll[E, A](as: List[Either[List[E], A]]): Either[List[E], List[A]] =
+    traverseAll(as, identity)
