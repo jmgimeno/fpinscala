@@ -50,6 +50,10 @@ class LazyListSuite extends PropSuite:
     case n ** lazyList =>
       assertEquals(lazyList.takeWhile(_ != n).toList, lazyList.toList.takeWhile(_ != n))
 
+  test("LazyList.takeWhile_foldRight")(genSmallInt ** genLazyList):
+    case n ** lazyList =>
+      assertEquals(lazyList.takeWhile_foldRight(_ != n).toList, lazyList.toList.takeWhile(_ != n))
+
   test("LazyList.forAll")(genSmallInt ** genLazyList):
     case n ** lazyList =>
       assertEquals(lazyList.forAll(_ != n), !lazyList.toList.contains(n))
