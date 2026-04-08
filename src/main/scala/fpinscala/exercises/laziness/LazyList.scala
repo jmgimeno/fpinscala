@@ -13,10 +13,10 @@ enum LazyList[+A]:
 
   def foldRight[B](z: => B)(f: (A, => B) => B): B = // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
     this match
-      case Cons(h,t) => f(h(), t().foldRight(z)(f)) // If `f` doesn't evaluate its second argument, the recursion never occurs.
+      case Cons(h, t) => f(h(), t().foldRight(z)(f)) // If `f` doesn't evaluate its second argument, the recursion never occurs.
       case _ => z
 
-  def exists(p: A => Boolean): Boolean = 
+  def exists(p: A => Boolean): Boolean =
     foldRight(false)((a, b) => p(a) || b) // Here `b` is the unevaluated recursive step that folds the tail of the lazy list. If `p(a)` returns `true`, `b` will never be evaluated and the computation terminates early.
 
   @annotation.tailrec
@@ -24,10 +24,13 @@ enum LazyList[+A]:
     case Empty => None
     case Cons(h, t) => if f(h()) then Some(h()) else t().find(f)
 
-  def take(n: Int): LazyList[A] = this match {
-    case LazyList.Cons(h, t) if n > 0 => LazyList.cons(h(), t().take(n - 1))
-    case _ => LazyList.empty
-  }
+  def take(n: Int): LazyList[A] =
+    // println(s"Take of $n")
+    this match {
+      case LazyList.Cons(h, _) if n == 1 => LazyList.cons(h(), LazyList.empty)
+      case LazyList.Cons(h, t) if n > 0 => LazyList.cons(h(), t().take(n - 1))
+      case _ => LazyList.empty
+    }
 
   @tailrec
   final def drop(n: Int): LazyList[A] = this match {
@@ -56,14 +59,44 @@ enum LazyList[+A]:
     case LazyList.Cons(h, t) => Some(h())
   }
 
+  def tailOption: Option[LazyList[A]] =
+    this match {
+      case LazyList.Empty => None
+      case LazyList.Cons(h, t) => Some(t())
+    }
+
   // 5.7 map, filter, append, flatmap using foldRight. Part of the exercise is
   // writing your own function signatures.
+
+  def headOption_foldRight: Option[A] =
+    foldRight(None)((head, _) => Some(head))
+
+  def map[B](f: A => B): LazyList[B] =
+    foldRight(LazyList.empty) { (head, map_of_tail) =>
+      LazyList.cons(f(head), map_of_tail)
+    }
+
+  def filter(p: A => Boolean): LazyList[A] =
+    foldRight(LazyList.empty) { (head, filter_of_tail) =>
+      if p(head) then LazyList.cons(head, filter_of_tail)
+      else filter_of_tail
+    }
+
+  def append[A2 >: A](that: => LazyList[A2]): LazyList[A2] =
+    foldRight(that) { (head, append_of_tail) =>
+      LazyList.cons(head, append_of_tail)
+    }
+
+  def flatMap[B](f: A => LazyList[B]): LazyList[B] =
+    foldRight(LazyList.empty){ (head, flatMap_of_tail) =>
+      f(head).append(flatMap_of_tail)
+    }
 
   def startsWith[B](s: LazyList[B]): Boolean = ???
 
 
 object LazyList:
-  def cons[A](hd: => A, tl: => LazyList[A]): LazyList[A] = 
+  def cons[A](hd: => A, tl: => LazyList[A]): LazyList[A] =
     lazy val head = hd
     lazy val tail = tl
     Cons(() => head, () => tail)
@@ -71,16 +104,33 @@ object LazyList:
   def empty[A]: LazyList[A] = Empty
 
   def apply[A](as: A*): LazyList[A] =
-    if as.isEmpty then empty 
-    else cons(as.head, apply(as.tail*))
+    if as.isEmpty then empty
+    else cons(as.head, apply(as.tail *))
 
   val ones: LazyList[Int] = LazyList.cons(1, ones)
 
-  def continually[A](a: A): LazyList[A] = ???
+  def continually[A](a: A): LazyList[A] = {
+    // LazyList.cons(a, continually(a))
+    lazy val as: LazyList[A] = LazyList.cons(a, as)
+    as
+  }
 
-  def from(n: Int): LazyList[Int] = ???
+  def from(n: Int): LazyList[Int] =
+    LazyList.cons(n, from(n + 1))
 
-  lazy val fibs: LazyList[Int] = ???
+  def map2[A,B,C](as: LazyList[A], bs: LazyList[B])(f: (A, B) => C): LazyList[C] =
+    (as, bs) match {
+      case (LazyList.Cons(ha, ta), LazyList.Cons(hb, tb)) =>
+        LazyList.cons(f(ha(), hb()), map2(ta(), tb())(f))
+      case _ => LazyList.empty
+    }
+
+  lazy val fibs: LazyList[Int] =
+    LazyList.cons(0,
+      LazyList.cons(1,
+        map2(fibs, fibs.drop(1))(_ + _)
+      )
+    )
 
   def unfold[A, S](state: S)(f: S => Option[(A, S)]): LazyList[A] = ???
 
