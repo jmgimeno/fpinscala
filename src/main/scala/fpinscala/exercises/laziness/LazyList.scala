@@ -88,7 +88,7 @@ enum LazyList[+A]:
     }
 
   def flatMap[B](f: A => LazyList[B]): LazyList[B] =
-    foldRight(LazyList.empty){ (head, flatMap_of_tail) =>
+    foldRight(LazyList.empty) { (head, flatMap_of_tail) =>
       f(head).append(flatMap_of_tail)
     }
 
@@ -118,26 +118,98 @@ object LazyList:
   def from(n: Int): LazyList[Int] =
     LazyList.cons(n, from(n + 1))
 
-  def map2[A,B,C](as: LazyList[A], bs: LazyList[B])(f: (A, B) => C): LazyList[C] =
+  def map2[A, B, C](as: LazyList[A], bs: LazyList[B])(f: (A, B) => C): LazyList[C] =
     (as, bs) match {
       case (LazyList.Cons(ha, ta), LazyList.Cons(hb, tb)) =>
         LazyList.cons(f(ha(), hb()), map2(ta(), tb())(f))
       case _ => LazyList.empty
     }
 
-  lazy val fibs: LazyList[Int] =
+  val fibs: LazyList[Int] =
     LazyList.cons(0,
       LazyList.cons(1,
         map2(fibs, fibs.drop(1))(_ + _)
       )
     )
 
-  def unfold[A, S](state: S)(f: S => Option[(A, S)]): LazyList[A] = ???
+  def unfold[A, S](state: S)(f: S => Option[(A, S)]): LazyList[A] =
+    f(state).fold(LazyList.empty) { (a, nextState) =>
+      LazyList.cons(a, unfold(nextState)(f))
+    }
 
-  lazy val fibsViaUnfold: LazyList[Int] = ???
+  lazy val fibsViaUnfold: LazyList[Int] =
+    unfold((0, 1)) {
+      case (current, next) =>
+        Some((current, (next, current + next)))
+    }
 
-  def fromViaUnfold(n: Int): LazyList[Int] = ???
+  //  lazy val fibsViaUnfold: LazyList[Int] =
+  //    unfold((0, 1)) {
+  //      state =>
+  //        Some((state(0), (state(1), state(0) + state(1))))
+  //    }
 
-  def continuallyViaUnfold[A](a: A): LazyList[A] = ???
+  // Fixeu-vos que si en comptes de fer un unfold per generar una LazyList
+  // amb els fibs fas un bucle per imprimir-los, les dues variables que uses
+  // són les que es corresponen amb l'estat.
+  // Aquest codi barreja generació i escriptura (viola el principi de responsabilitat
+  // única)
+  def fibsImperative(n: Int): Unit = {
+    var current = 0
+    var next = 1
+    for _ <- 1 to n do {
+      println(current)
+      val tmp = current
+      current = next
+      next = tmp + next
+    }
+  }
 
-  lazy val onesViaUnfold: LazyList[Int] = ???
+  // Una altra manera de fer una cosa semblant seria implementant un iterador
+  // (fixeu-vos que no es referencialment transparent ja que cada vegada que cridem
+  // a hasNext/next obtenim un valor diferent). En canvi la LazyList és referencialment
+  // transparent.
+  // Les variables d'instància de l'iterador són l'estat de l'unfold.
+  class FibIterator extends java.util.Iterator[Int] {
+    var current = 0
+    var next_ = 1
+
+    override def hasNext: Boolean = true
+
+    override def next(): Int =
+      val result = current
+      current = next_
+      next_ = result + next_
+      result
+  }
+
+  // Consumim l'iterador, imprimint cada valor
+  // Responsabilitats separades:
+  //   generació -> iterador
+  //   bucle -> escriptura
+  // NOTA: Aquesta mena de separació és la que aconseguim també amb
+  // les lazyList.
+  // Podriem fer:
+  //     fibs.take(10).forEach(println)
+  // (si tinguèssim l'operador forEach).
+  def fibsIterator(n: Int): Unit = {
+    val it = FibIterator()
+    for _ <- 1 to n do {
+      println(it.next())
+    }
+  }
+
+  def fromViaUnfold(n: Int): LazyList[Int] =
+    unfold(n) { current =>
+      Some((current, current + 1))
+    }
+
+  def continuallyViaUnfold[A](a: A): LazyList[A] =
+    unfold(()) { _ =>
+      Some((a, ()))
+    }
+
+  val onesViaUnfold: LazyList[Int] =
+    unfold(()) { _ =>
+      Some((1, ()))
+    }
