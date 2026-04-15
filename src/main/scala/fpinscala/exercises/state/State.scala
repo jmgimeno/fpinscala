@@ -93,11 +93,40 @@ object RNG:
       map2(ra, acc)(_ :: _)
     }
 
-  def flatMap[A, B](r: Rand[A])(f: A => Rand[B]): Rand[B] = ???
+  def ints_viaSequence(count: Int): Rand[List[Int]] =
+    sequence(List.fill(count)(RNG.int))
 
-  def mapViaFlatMap[A, B](r: Rand[A])(f: A => B): Rand[B] = ???
+  def nonNegativeLessThan(n: Int): Rand[Int] = { rng =>
+    val (i, rng2) = nonNegativeInt(rng)
+    val mod = i % n
+    if i + (n - 1) - mod >= 0 then
+      (mod, rng2)
+    else nonNegativeLessThan(n)(rng2)
+  }
 
-  def map2ViaFlatMap[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
+  def flatMap[A, B](r: Rand[A])(f: A => Rand[B]): Rand[B] =
+    rng =>
+      val (a, rng2) = r(rng)
+      val rb: Rand[B] = f(a)
+      rb(rng2)
+
+  def nonNegativeLessThan_viaFlatMap(n: Int): Rand[Int] =
+    flatMap(nonNegativeInt) { i =>
+      val mod = i % n
+      if i + (n - 1) - mod >= 0
+        then unit(mod)
+        else nonNegativeLessThan_viaFlatMap(n)
+    }
+
+  def mapViaFlatMap[A, B](r: Rand[A])(f: A => B): Rand[B] =
+    flatMap(r)(a => unit(f(a)))
+
+  def map2ViaFlatMap[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
+    flatMap(ra) { a =>
+      map(rb) { b =>
+        f(a, b)
+      }
+    }
 
 opaque type State[S, +A] = S => (A, S)
 
