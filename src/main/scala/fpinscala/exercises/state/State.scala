@@ -128,6 +128,28 @@ object RNG:
       }
     }
 
+object Local:
+
+  // I define a local object to hold the extension methods to
+  // no interfere with the "normal" methods defined in the
+  // outer object.
+
+  extension[A](ra: RNG.Rand[A]) {
+    def flatMap[B](f: A => RNG.Rand[B]): RNG.Rand[B] =
+      RNG.flatMap(ra)(f)
+
+    def map[B](f: A => B): RNG.Rand[B] =
+      RNG.map(ra)(f)
+  }
+
+  def map2_viaFor[A,B,C](ra: RNG.Rand[A], rb: RNG.Rand[B])(f: (A, B) => C): RNG.Rand[C] =
+    for
+      a <- ra
+      b <- rb
+    yield f(a, b)
+
+end Local
+
 opaque type State[S, +A] = S => (A, S)
 
 object State:
