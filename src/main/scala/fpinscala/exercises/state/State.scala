@@ -36,16 +36,16 @@ object RNG:
     val (n, rng2) = nonNegativeInt(rng)
     (n / (Int.MaxValue.toDouble + 1.0), rng2)
 
-  def intDouble(rng: RNG): ((Int,Double), RNG) =
+  def intDouble(rng: RNG): ((Int, Double), RNG) =
     val (n, rng2) = rng.nextInt
     val (d, rng3) = double(rng2)
     ((n, d), rng3)
 
-  def doubleInt(rng: RNG): ((Double,Int), RNG) =
+  def doubleInt(rng: RNG): ((Double, Int), RNG) =
     val ((n, d), rng2) = intDouble(rng)
     ((d, n), rng2)
 
-  def double3(rng: RNG): ((Double,Double,Double), RNG) =
+  def double3(rng: RNG): ((Double, Double, Double), RNG) =
     val (d1, rng2) = double(rng)
     val (d2, rng3) = double(rng2)
     val (d3, rng4) = double(rng3)
@@ -61,12 +61,13 @@ object RNG:
 
   def ints_TR(count: Int)(rng: RNG): (List[Int], RNG) = {
     @tailrec
-    def go(count: Int, acc: List[Int], rng: RNG): (List[Int], RNG)=
+    def go(count: Int, acc: List[Int], rng: RNG): (List[Int], RNG) =
       if count <= 0 then (acc, rng)
       else {
         val (elem, rng2) = rng.nextInt
         go(count - 1, elem :: acc, rng2)
       }
+
     go(count, Nil, rng)
   }
 
@@ -114,8 +115,8 @@ object RNG:
     flatMap(nonNegativeInt) { i =>
       val mod = i % n
       if i + (n - 1) - mod >= 0
-        then unit(mod)
-        else nonNegativeLessThan_viaFlatMap(n)
+      then unit(mod)
+      else nonNegativeLessThan_viaFlatMap(n)
     }
 
   def mapViaFlatMap[A, B](r: Rand[A])(f: A => B): Rand[B] =
@@ -134,7 +135,7 @@ object Local:
   // no interfere with the "normal" methods defined in the
   // outer object.
 
-  extension[A](ra: RNG.Rand[A]) {
+  extension [A](ra: RNG.Rand[A]) {
     def flatMap[B](f: A => RNG.Rand[B]): RNG.Rand[B] =
       RNG.flatMap(ra)(f)
 
@@ -142,7 +143,7 @@ object Local:
       RNG.map(ra)(f)
   }
 
-  def map2_viaFor[A,B,C](ra: RNG.Rand[A], rb: RNG.Rand[B])(f: (A, B) => C): RNG.Rand[C] =
+  def map2_viaFor[A, B, C](ra: RNG.Rand[A], rb: RNG.Rand[B])(f: (A, B) => C): RNG.Rand[C] =
     for
       a <- ra
       b <- rb
@@ -157,15 +158,43 @@ object State:
     def run(s: S): (A, S) = underlying(s)
 
     def map[B](f: A => B): State[S, B] =
-      ???
+      s =>
+        val (a, s2) = underlying(s)
+        (f(a), s2)
 
     def map2[B, C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
-      ???
+      s =>
+        val (a, s2) = underlying(s)
+        val (b, s3) = sb(s2)
+        (f(a, b), s3)
 
     def flatMap[B](f: A => State[S, B]): State[S, B] =
-      ???
+      s =>
+        val (a, s2) = underlying(s)
+        f(a)(s2)
 
   def apply[S, A](f: S => (A, S)): State[S, A] = f
+
+  def unit[S, A](a: A): State[S, A] =
+    s => (a, s)
+
+  def sequence[S, A](ss: List[State[S, A]]): State[S, List[A]] =
+    traverse(ss)(identity)
+
+  def traverse[S, A, B](ss: List[A])(f: A => State[S, B]): State[S, List[B]] =
+    ss.foldRight(unit(Nil)) { (a: A, acc: State[S, List[B]]) =>
+      f(a).map2(acc)(_ :: _)
+    }
+
+  def get[S]: State[S, S] = s => (s, s)
+
+  def set[S](s: S): State[S, Unit] = _ => ((), s)
+
+  def modify[S](f: S => S): State[S, Unit] =
+    for
+      s <- get[S]
+      _ <- set(f(s))
+    yield ()
 
 enum Input:
   case Coin, Turn
@@ -173,4 +202,19 @@ enum Input:
 case class Machine(locked: Boolean, candies: Int, coins: Int)
 
 object Candy:
-  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = ???
+  def step(input: Input)(machine: Machine): Machine =
+    (input, machine) match
+      case (Input.Coin, Machine(true, candies, coins)) if candies > 0 =>
+        Machine(false, candies, coins + 1)
+      case (Input.Turn, Machine(false, candies, coins)) if candies > 0 =>
+        Machine(true, candies - 1, coins)
+      case (_, m) => m
+
+  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = {
+    for {
+      _ <- State.traverse(inputs) { input =>
+        State.modify(step(input))
+      }
+      m <- State.get
+    } yield (m.coins, m.candies)
+  }
